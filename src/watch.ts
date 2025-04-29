@@ -4,7 +4,13 @@ import fs from "fs";
 import { buildEntry, removeDir, ensureDir } from "./build.js";
 import { logDevAction } from "./output.js";
 
-export function watch(outDir: string, SRC_DIR: string, PORT: number) {
+export function watch(
+  outDir: string,
+  SRC_DIR: string,
+  PORT: number,
+  dropConsole: boolean = false,
+  dropDebugger: boolean = false,
+) {
   // Clear dev folder on startup
   removeDir(outDir);
   ensureDir(outDir);
@@ -13,13 +19,13 @@ export function watch(outDir: string, SRC_DIR: string, PORT: number) {
   });
   watcher.on("change", async (file) => {
     if (file.endsWith(".ts") || file.endsWith(".js")) {
-      await buildEntry(file, outDir, SRC_DIR);
+      await buildEntry(file, outDir, SRC_DIR, false, dropConsole, dropDebugger);
       logDevAction({ action: "recompiled", file, srcDir: SRC_DIR, port: PORT });
     }
   });
   watcher.on("add", async (file) => {
     if (file.endsWith(".ts") || file.endsWith(".js")) {
-      await buildEntry(file, outDir, SRC_DIR);
+      await buildEntry(file, outDir, SRC_DIR, false, dropConsole, dropDebugger);
       logDevAction({ action: "compiled", file, srcDir: SRC_DIR, port: PORT });
     }
   });

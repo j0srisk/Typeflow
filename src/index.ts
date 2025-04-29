@@ -7,7 +7,7 @@ import { watch } from "./watch.js";
 import { serve } from "./server.js";
 
 // CLI arg parsing (minimal)
-// Usage: flowscript dev|build [--src=srcdir] [--out=outdir] [--port=PORT]
+// Usage: flowscript dev|build [--src=srcdir] [--out=outdir] [--port=PORT] [--drop-console] [--drop-debugger]
 function parseArgs() {
   const args = process.argv.slice(2);
   const opts: Record<string, string | boolean> = {};
@@ -29,6 +29,9 @@ function parseArgs() {
       opts[key] = val === undefined ? true : val;
     }
   }
+  // Ensure drop-console and drop-debugger are booleans
+  opts["drop-console"] = Boolean(opts["drop-console"]);
+  opts["drop-debugger"] = Boolean(opts["drop-debugger"]);
   return { mode, opts };
 }
 
@@ -62,13 +65,15 @@ function isPortAvailable(port: number): Promise<boolean> {
 
 // Entrypoint
 async function main() {
+  const dropConsole = Boolean(opts["drop-console"]);
+  const dropDebugger = Boolean(opts["drop-debugger"]);
   if (mode === "dev") {
     const start = Date.now();
-    await buildAll(DEV_DIR, SRC_DIR, false);
+    await buildAll(DEV_DIR, SRC_DIR, false, dropConsole, dropDebugger);
     const readyMs = Date.now() - start;
     const portArg = opts.port ? Number(opts.port) : 3000;
     const PORT = await findAvailablePort(portArg);
-    watch(DEV_DIR, SRC_DIR, PORT);
+    watch(DEV_DIR, SRC_DIR, PORT, dropConsole, dropDebugger);
     serve(DEV_DIR, PORT, readyMs);
   } else if (mode === "build") {
     console.log();
@@ -77,7 +82,7 @@ async function main() {
         chalk.rgb(21, 110, 245)(" building for production..."),
     );
     const start = Date.now();
-    await buildAll(DIST_DIR, SRC_DIR, true);
+    await buildAll(DIST_DIR, SRC_DIR, true, dropConsole, dropDebugger);
     logBuildOutput(DIST_DIR, start);
   } else {
     console.error(`Unknown mode: ${mode}`);

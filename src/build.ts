@@ -10,10 +10,8 @@ export function getEntryPoints(SRC_DIR: string): string[] {
         return walk(fullPath);
       } else if (
         entry.isFile() &&
-        (
-          (entry.name.endsWith(".js")) ||
-          (entry.name.endsWith(".ts") && !entry.name.endsWith(".d.ts"))
-        )
+        (entry.name.endsWith(".js") ||
+          (entry.name.endsWith(".ts") && !entry.name.endsWith(".d.ts")))
       ) {
         return [fullPath];
       } else {
@@ -41,6 +39,8 @@ export async function buildEntry(
   outDir: string,
   SRC_DIR: string,
   prod: boolean = false,
+  dropConsole: boolean = false,
+  dropDebugger: boolean = false,
 ) {
   const relPath = path.relative(SRC_DIR, entry);
   const jsOut = path.join(outDir, relPath.replace(/\.(ts|js)$/, ".js"));
@@ -57,7 +57,13 @@ export async function buildEntry(
     sourcemap: !prod,
     metafile: true,
     logLevel: "silent",
-    drop: prod ? ["console", "debugger"] : undefined,
+    drop:
+      dropConsole || dropDebugger
+        ? ([
+            ...(dropConsole ? ["console"] : []),
+            ...(dropDebugger ? ["debugger"] : []),
+          ] as import("esbuild").Drop[])
+        : undefined,
   });
 }
 
@@ -65,9 +71,15 @@ export async function buildAll(
   outDir: string,
   SRC_DIR: string,
   prod: boolean = false,
+  dropConsole: boolean = false,
+  dropDebugger: boolean = false,
 ) {
   removeDir(outDir);
   ensureDir(outDir);
   const entries = getEntryPoints(SRC_DIR);
-  await Promise.all(entries.map((e) => buildEntry(e, outDir, SRC_DIR, prod)));
+  await Promise.all(
+    entries.map((e) =>
+      buildEntry(e, outDir, SRC_DIR, prod, dropConsole, dropDebugger),
+    ),
+  );
 }
