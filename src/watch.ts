@@ -1,8 +1,8 @@
 import chokidar from "chokidar";
 import path from "path";
 import fs from "fs";
-import { buildEntry } from "./build";
-import { logDevAction } from "./output";
+import { buildEntry } from "./build.js";
+import { logDevAction } from "./output.js";
 
 export function watch(outDir: string, SRC_DIR: string, PORT: number) {
   const watcher = chokidar.watch([`${SRC_DIR}/**/*.ts`, `${SRC_DIR}/**/*.js`]);

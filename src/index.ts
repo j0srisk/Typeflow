@@ -1,10 +1,10 @@
 #!/usr/bin/env node
 
 import path from "path";
-import { buildAll } from "./build";
-import { logBuildOutput } from "./output";
-import { watch } from "./watch";
-import { serve } from "./server";
+import { buildAll } from "./build.js";
+import { logBuildOutput } from "./output.js";
+import { watch } from "./watch.js";
+import { serve } from "./server.js";
 
 // CLI arg parsing (minimal)
 // Usage: flowscript dev|build [--src=srcdir] [--out=outdir] [--port=PORT]
@@ -85,6 +85,4 @@ async function main() {
   }
 }
 
-if (require.main === module) {
-  main();
-}
+await main();
