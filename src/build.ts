@@ -24,6 +24,12 @@ export function getEntryPoints(SRC_DIR: string): string[] {
   return walk(SRC_DIR);
 }
 
+export function removeDir(dir: string) {
+  if (fs.existsSync(dir)) {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+}
+
 export function ensureDir(dir: string) {
   if (!fs.existsSync(dir)) {
     fs.mkdirSync(dir, { recursive: true });
@@ -60,6 +66,7 @@ export async function buildAll(
   SRC_DIR: string,
   prod: boolean = false,
 ) {
+  removeDir(outDir);
   ensureDir(outDir);
   const entries = getEntryPoints(SRC_DIR);
   await Promise.all(entries.map((e) => buildEntry(e, outDir, SRC_DIR, prod)));

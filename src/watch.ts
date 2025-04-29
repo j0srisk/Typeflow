@@ -1,10 +1,13 @@
 import chokidar from "chokidar";
 import path from "path";
 import fs from "fs";
-import { buildEntry } from "./build.js";
+import { buildEntry, removeDir, ensureDir } from "./build.js";
 import { logDevAction } from "./output.js";
 
 export function watch(outDir: string, SRC_DIR: string, PORT: number) {
+  // Clear dev folder on startup
+  removeDir(outDir);
+  ensureDir(outDir);
   const watcher = chokidar.watch([`${SRC_DIR}/**/*.ts`, `${SRC_DIR}/**/*.js`], {
     ignored: "**/*.d.ts",
   });
