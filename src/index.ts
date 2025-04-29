@@ -1,12 +1,10 @@
 #!/usr/bin/env node
 
 import path from "path";
-import chalk from "chalk";
-import { buildAll, ensureDir } from "./build";
+import { buildAll } from "./build";
 import { watch } from "./watch";
 import { serve } from "./server";
 
-// CLI arg parsing (minimal)
 // CLI arg parsing (minimal)
 // Usage: flowscript dev|build [--src=srcdir] [--out=outdir] [--port=PORT]
 function parseArgs() {
