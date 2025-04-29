@@ -5,7 +5,9 @@ import { buildEntry } from "./build.js";
 import { logDevAction } from "./output.js";
 
 export function watch(outDir: string, SRC_DIR: string, PORT: number) {
-  const watcher = chokidar.watch([`${SRC_DIR}/**/*.ts`, `${SRC_DIR}/**/*.js`]);
+  const watcher = chokidar.watch([`${SRC_DIR}/**/*.ts`, `${SRC_DIR}/**/*.js`], {
+    ignored: "**/*.d.ts",
+  });
   watcher.on("change", async (file) => {
     if (file.endsWith(".ts") || file.endsWith(".js")) {
       await buildEntry(file, outDir, SRC_DIR);

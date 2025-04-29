@@ -10,7 +10,10 @@ export function getEntryPoints(SRC_DIR: string): string[] {
         return walk(fullPath);
       } else if (
         entry.isFile() &&
-        (entry.name.endsWith(".ts") || entry.name.endsWith(".js"))
+        (
+          (entry.name.endsWith(".js")) ||
+          (entry.name.endsWith(".ts") && !entry.name.endsWith(".d.ts"))
+        )
       ) {
         return [fullPath];
       } else {
