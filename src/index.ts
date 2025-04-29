@@ -7,7 +7,7 @@ import { watch } from "./watch.js";
 import { serve } from "./server.js";
 
 // CLI arg parsing (minimal)
-// Usage: flowscript dev|build [--src=srcdir] [--out=outdir] [--port=PORT] [--drop-console] [--drop-debugger]
+// Usage: typeflow dev|build [--src=srcdir] [--out=outdir] [--port=PORT] [--drop-console] [--drop-debugger]
 function parseArgs() {
   const args = process.argv.slice(2);
   const opts: Record<string, string | boolean> = {};
@@ -78,7 +78,7 @@ async function main() {
   } else if (mode === "build") {
     console.log();
     console.log(
-      chalk.cyan("flowscript") +
+      chalk.cyan("typeflow") +
         chalk.rgb(21, 110, 245)(" building for production..."),
     );
     const start = Date.now();

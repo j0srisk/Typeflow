@@ -1,11 +1,11 @@
 {
-  "name": "flowscript",
+  "name": "typeflow",
   "version": "1.0.0",
   "description": "Local dev tool for modular TypeScript+CSS workflow with Webflow.",
   "type": "module",
   "main": "build.js",
   "bin": {
-    "flowscript": "dist/index.js"
+    "typeflow": "dist/index.js"
   },
   "scripts": {
     "build": "npx tsc",

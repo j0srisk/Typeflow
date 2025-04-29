@@ -9,7 +9,7 @@ export function serve(outDir: string, PORT: number, readyMs?: number) {
     const elapsed = readyMs ?? Date.now() - start;
     console.log();
     console.log(
-      chalk.rgb(21, 110, 245).bold("  FlowScript") +
+      chalk.rgb(21, 110, 245).bold("  Typeflow") +
         chalk.dim("  ready in ") +
         chalk.white.bold(elapsed) +
         chalk.white(" ms"),

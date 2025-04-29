@@ -22,7 +22,7 @@ export function logDevAction({
   const link = `http://localhost:${port}${servedPath}`;
   console.log(
     chalk.dim(`${timestamp}`) +
-      chalk.cyan.bold(` [flowscript]`) +
+      chalk.cyan.bold(` [typeflow]`) +
       chalk.rgb(21, 110, 245).bold(` script ${action}`) +
       ` \u001b]8;;${link}\u0007${chalk.dim(relPath)}\u001b]8;;\u0007`,
   );
