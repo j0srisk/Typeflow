@@ -74,7 +74,7 @@ async function main() {
     console.log();
     console.log(
       chalk.cyan("flowscript") +
-        chalk.rgb(21, 110, 245)(" building for production...")
+        chalk.rgb(21, 110, 245)(" building for production..."),
     );
     const start = Date.now();
     await buildAll(DIST_DIR, SRC_DIR, true);

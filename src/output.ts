@@ -24,7 +24,7 @@ export function logDevAction({
     chalk.dim(`${timestamp}`) +
       chalk.cyan.bold(` [flowscript]`) +
       chalk.rgb(21, 110, 245).bold(` script ${action}`) +
-      ` \u001b]8;;${link}\u0007${chalk.dim(relPath)}\u001b]8;;\u0007`
+      ` \u001b]8;;${link}\u0007${chalk.dim(relPath)}\u001b]8;;\u0007`,
   );
 }
 

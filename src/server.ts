@@ -12,13 +12,13 @@ export function serve(outDir: string, PORT: number, readyMs?: number) {
       chalk.rgb(21, 110, 245).bold("  FlowScript") +
         chalk.dim("  ready in ") +
         chalk.white.bold(elapsed) +
-        chalk.white(" ms")
+        chalk.white(" ms"),
     );
     console.log();
     console.log(
       chalk.cyan("  ➜") +
         chalk.white.bold(`  Local:`) +
-        chalk.cyan(` http://localhost:${PORT}/`)
+        chalk.cyan(` http://localhost:${PORT}/`),
     );
     console.log();
   });

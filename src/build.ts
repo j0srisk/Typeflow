@@ -27,7 +27,12 @@ export function ensureDir(dir: string) {
   }
 }
 
-export async function buildEntry(entry: string, outDir: string, SRC_DIR: string, prod: boolean = false) {
+export async function buildEntry(
+  entry: string,
+  outDir: string,
+  SRC_DIR: string,
+  prod: boolean = false,
+) {
   const relPath = path.relative(SRC_DIR, entry);
   const jsOut = path.join(outDir, relPath.replace(/\.(ts|js)$/, ".js"));
   const jsOutDir = path.dirname(jsOut);
@@ -47,7 +52,11 @@ export async function buildEntry(entry: string, outDir: string, SRC_DIR: string,
   });
 }
 
-export async function buildAll(outDir: string, SRC_DIR: string, prod: boolean = false) {
+export async function buildAll(
+  outDir: string,
+  SRC_DIR: string,
+  prod: boolean = false,
+) {
   ensureDir(outDir);
   const entries = getEntryPoints(SRC_DIR);
   await Promise.all(entries.map((e) => buildEntry(e, outDir, SRC_DIR, prod)));
