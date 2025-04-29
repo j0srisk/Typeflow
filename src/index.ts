@@ -2,6 +2,7 @@
 
 import path from "path";
 import { buildAll } from "./build";
+import { logBuildOutput } from "./output";
 import { watch } from "./watch";
 import { serve } from "./server";
 
@@ -36,6 +37,7 @@ const SRC_DIR = path.resolve(process.cwd(), (opts.src as string) || "src");
 const DEV_DIR = path.resolve(process.cwd(), (opts.out as string) || "dev");
 const DIST_DIR = path.resolve(process.cwd(), (opts.out as string) || "dist");
 import net from "net";
+import chalk from "chalk";
 
 async function findAvailablePort(startPort: number): Promise<number> {
   let port = startPort;
@@ -69,8 +71,14 @@ async function main() {
     watch(DEV_DIR, SRC_DIR, PORT);
     serve(DEV_DIR, PORT, readyMs);
   } else if (mode === "build") {
+    console.log();
+    console.log(
+      chalk.cyan("flowscript") +
+        chalk.rgb(21, 110, 245)(" building for production...")
+    );
+    const start = Date.now();
     await buildAll(DIST_DIR, SRC_DIR, true);
-    console.log(`Production build complete. Files are in ${DIST_DIR}/.`);
+    logBuildOutput(DIST_DIR, start);
   } else {
     console.error(`Unknown mode: ${mode}`);
     process.exit(1);
