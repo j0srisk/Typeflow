@@ -1,5 +1,5 @@
 {
-  "name": "typeflow",
+  "name": "@j0srisk/typeflow",
   "version": "1.0.0",
   "description": "Local dev tool for modular TypeScript+CSS workflow with Webflow.",
   "type": "module",
