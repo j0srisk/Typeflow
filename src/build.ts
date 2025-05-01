@@ -57,6 +57,7 @@ export async function buildEntry(
     sourcemap: !prod,
     metafile: true,
     logLevel: "silent",
+    treeShaking: true,
     drop:
       dropConsole || dropDebugger
         ? ([
