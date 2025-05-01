@@ -14,6 +14,7 @@ export function watch(
   // Clear dev folder on startup
   removeDir(outDir);
   ensureDir(outDir);
+  //TOOD: add support for CSS files
   const watcher = chokidar.watch([`${SRC_DIR}/**/*.ts`, `${SRC_DIR}/**/*.js`], {
     ignored: "**/*.d.ts",
   });

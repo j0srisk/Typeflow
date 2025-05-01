@@ -37,6 +37,7 @@ function parseArgs() {
 
 const { mode, opts } = parseArgs();
 const SRC_DIR = path.resolve(process.cwd(), (opts.src as string) || "src");
+// TODO: serve dev files from memory instead of from disk
 const DEV_DIR = path.resolve(process.cwd(), (opts.out as string) || "dev");
 const DIST_DIR = path.resolve(process.cwd(), (opts.out as string) || "dist");
 import net from "net";
