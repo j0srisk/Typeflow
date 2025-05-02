@@ -11,7 +11,8 @@ export function getEntryPoints(SRC_DIR: string): string[] {
       } else if (
         entry.isFile() &&
         (entry.name.endsWith(".js") ||
-          (entry.name.endsWith(".ts") && !entry.name.endsWith(".d.ts")))
+          (entry.name.endsWith(".ts") && !entry.name.endsWith(".d.ts")) ||
+          entry.name.endsWith(".css"))
       ) {
         return [fullPath];
       } else {
@@ -43,6 +44,16 @@ export async function buildEntry(
   dropDebugger: boolean = false,
 ) {
   const relPath = path.relative(SRC_DIR, entry);
+  if (entry.endsWith(".css")) {
+    // Copy CSS file directly
+    const cssOut = path.join(outDir, relPath);
+    const cssOutDir = path.dirname(cssOut);
+    if (!fs.existsSync(cssOutDir)) {
+      fs.mkdirSync(cssOutDir, { recursive: true });
+    }
+    fs.copyFileSync(entry, cssOut);
+    return;
+  }
   const jsOut = path.join(outDir, relPath.replace(/\.(ts|js)$/, ".js"));
   const jsOutDir = path.dirname(jsOut);
   if (!fs.existsSync(jsOutDir)) {

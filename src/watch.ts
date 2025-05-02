@@ -14,13 +14,25 @@ export function watch(
   // Clear dev folder on startup
   removeDir(outDir);
   ensureDir(outDir);
-  //TOOD: add support for CSS files
-  const watcher = chokidar.watch([`${SRC_DIR}/**/*.ts`, `${SRC_DIR}/**/*.js`], {
-    ignored: "**/*.d.ts",
-  });
+  const watcher = chokidar.watch(
+    [`${SRC_DIR}/**/*.ts`, `${SRC_DIR}/**/*.js`, `${SRC_DIR}/**/*.css`],
+    {
+      ignored: "**/*.d.ts",
+    },
+  );
   watcher.on("change", async (file) => {
     if (file.endsWith(".ts") || file.endsWith(".js")) {
       await buildEntry(file, outDir, SRC_DIR, false, dropConsole, dropDebugger);
+      logDevAction({ action: "recompiled", file, srcDir: SRC_DIR, port: PORT });
+    } else if (file.endsWith(".css")) {
+      // Copy CSS file
+      const relPath = path.relative(SRC_DIR, file);
+      const cssOut = path.join(outDir, relPath);
+      const cssOutDir = path.dirname(cssOut);
+      if (!fs.existsSync(cssOutDir)) {
+        fs.mkdirSync(cssOutDir, { recursive: true });
+      }
+      fs.copyFileSync(file, cssOut);
       logDevAction({ action: "recompiled", file, srcDir: SRC_DIR, port: PORT });
     }
   });
@@ -28,12 +40,29 @@ export function watch(
     if (file.endsWith(".ts") || file.endsWith(".js")) {
       await buildEntry(file, outDir, SRC_DIR, false, dropConsole, dropDebugger);
       logDevAction({ action: "compiled", file, srcDir: SRC_DIR, port: PORT });
+    } else if (file.endsWith(".css")) {
+      // Copy CSS file
+      const relPath = path.relative(SRC_DIR, file);
+      const cssOut = path.join(outDir, relPath);
+      const cssOutDir = path.dirname(cssOut);
+      if (!fs.existsSync(cssOutDir)) {
+        fs.mkdirSync(cssOutDir, { recursive: true });
+      }
+      fs.copyFileSync(file, cssOut);
+      logDevAction({ action: "compiled", file, srcDir: SRC_DIR, port: PORT });
     }
   });
   watcher.on("unlink", async (file) => {
-    const base = path.basename(file, path.extname(file));
-    const jsOut = path.join(outDir, `${base}.js`);
-    if (fs.existsSync(jsOut)) fs.unlinkSync(jsOut);
-    // logDevAction({ action: "removed", file, srcDir: SRC_DIR, port: PORT });
+    if (file.endsWith(".ts") || file.endsWith(".js")) {
+      const base = path.basename(file, path.extname(file));
+      const jsOut = path.join(outDir, `${base}.js`);
+      if (fs.existsSync(jsOut)) fs.unlinkSync(jsOut);
+      // logDevAction({ action: "removed", file, srcDir: SRC_DIR, port: PORT });
+    } else if (file.endsWith(".css")) {
+      const relPath = path.relative(SRC_DIR, file);
+      const cssOut = path.join(outDir, relPath);
+      if (fs.existsSync(cssOut)) fs.unlinkSync(cssOut);
+      // logDevAction({ action: "removed", file, srcDir: SRC_DIR, port: PORT });
+    }
   });
 }
