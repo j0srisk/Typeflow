@@ -1,6 +1,6 @@
 import path from "path";
 import fs from "fs";
-import esbuild from "esbuild";
+import esbuild, { type Metafile } from "esbuild";
 
 export function getEntryPoints(SRC_DIR: string): string[] {
   function walk(dir: string): string[] {
@@ -35,6 +35,10 @@ export function ensureDir(dir: string) {
   }
 }
 
+/**
+ * Builds an entry point and returns the esbuild metafile if applicable.
+ * @returns {Promise<object|undefined>} esbuild metafile for JS/TS entries; undefined for CSS
+ */
 export async function buildEntry(
   entry: string,
   outDir: string,
@@ -42,7 +46,7 @@ export async function buildEntry(
   prod: boolean = false,
   dropConsole: boolean = false,
   dropDebugger: boolean = false,
-) {
+): Promise<Metafile | undefined> {
   const relPath = path.relative(SRC_DIR, entry);
   if (entry.endsWith(".css")) {
     // Copy CSS file directly
@@ -52,14 +56,14 @@ export async function buildEntry(
       fs.mkdirSync(cssOutDir, { recursive: true });
     }
     fs.copyFileSync(entry, cssOut);
-    return;
+    return undefined;
   }
   const jsOut = path.join(outDir, relPath.replace(/\.(ts|js)$/, ".js"));
   const jsOutDir = path.dirname(jsOut);
   if (!fs.existsSync(jsOutDir)) {
     fs.mkdirSync(jsOutDir, { recursive: true });
   }
-  await esbuild.build({
+  const result = await esbuild.build({
     entryPoints: [entry],
     bundle: true,
     outfile: jsOut,
@@ -77,6 +81,8 @@ export async function buildEntry(
           ] as import("esbuild").Drop[])
         : undefined,
   });
+  // esbuild returns a "metafile" property when metafile: true
+  return result.metafile;
 }
 
 export async function buildAll(
