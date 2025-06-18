@@ -5,7 +5,6 @@ import { runDev } from "./commands/dev.js";
 import { runBuild } from "./commands/build.js";
 
 async function main() {
-  console.log(config);
   if (config.mode === "dev") {
     await runDev(config);
   } else if (config.mode === "build") {
