@@ -10,6 +10,7 @@ export interface Config {
   port: number;
   dropConsole: boolean;
   dropDebugger: boolean;
+  minify: boolean;
 }
 
 function parseArgs() {
@@ -45,6 +46,7 @@ function loadConfig(): Config {
   const port = opts.port ? Number(opts.port) : 3000;
   const dropConsole = Boolean(opts["drop-console"]);
   const dropDebugger = Boolean(opts["drop-debugger"]);
+  const minify = Boolean(opts.minify);
 
   return {
     mode,
@@ -54,6 +56,7 @@ function loadConfig(): Config {
     port,
     dropConsole,
     dropDebugger,
+    minify,
   };
 }
 

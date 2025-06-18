@@ -42,12 +42,13 @@ export function ensureDir(dir: string) {
 export async function buildEntry(
   entry: string,
   outDir: string,
-  SRC_DIR: string,
+  srcDir: string,
   prod: boolean = false,
   dropConsole: boolean = false,
   dropDebugger: boolean = false,
+  minify: boolean = false,
 ): Promise<Metafile | undefined> {
-  const relPath = path.relative(SRC_DIR, entry);
+  const relPath = path.relative(srcDir, entry);
   if (entry.endsWith(".css")) {
     // Copy CSS file directly
     const cssOut = path.join(outDir, relPath);
@@ -68,7 +69,7 @@ export async function buildEntry(
     bundle: true,
     outfile: jsOut,
     format: "iife",
-    minify: prod,
+    minify: minify,
     sourcemap: !prod,
     metafile: true,
     logLevel: "silent",
@@ -87,17 +88,18 @@ export async function buildEntry(
 
 export async function buildAll(
   outDir: string,
-  SRC_DIR: string,
+  srcDir: string,
   prod: boolean = false,
   dropConsole: boolean = false,
   dropDebugger: boolean = false,
+  minify: boolean = false,
 ) {
   removeDir(outDir);
   ensureDir(outDir);
-  const entries = getEntryPoints(SRC_DIR);
+  const entries = getEntryPoints(srcDir);
   await Promise.all(
     entries.map((e) =>
-      buildEntry(e, outDir, SRC_DIR, prod, dropConsole, dropDebugger),
+      buildEntry(e, outDir, srcDir, prod, dropConsole, dropDebugger, minify),
     ),
   );
 }

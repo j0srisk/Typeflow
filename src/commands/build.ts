@@ -16,6 +16,7 @@ export async function runBuild(config: Config) {
     true,
     config.dropConsole,
     config.dropDebugger,
+    config.minify,
   );
   logBuildOutput(config.distDir, start);
 }
