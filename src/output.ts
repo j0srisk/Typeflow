@@ -3,31 +3,6 @@ import path from "path";
 import fs from "fs";
 import { gzipSizeSync } from "gzip-size";
 
-export function logDevAction({
-  action,
-  file,
-  srcDir,
-  port,
-}: {
-  action: string;
-  file: string;
-  srcDir: string;
-  port: number;
-}) {
-  const now = new Date();
-  const timestamp = now.toLocaleTimeString("en-US", { hour12: true });
-  let relPath = path.relative(srcDir, file).replace(/\\/g, "/");
-  let servedPath = relPath.replace(/\.ts$/, ".js");
-  if (!servedPath.startsWith("/")) servedPath = "/" + servedPath;
-  const link = `http://localhost:${port}${servedPath}`;
-  console.log(
-    chalk.dim(`${timestamp}`) +
-      chalk.cyan.bold(` [typeflow]`) +
-      chalk.rgb(21, 110, 245).bold(` script ${action}`) +
-      ` \u001b]8;;${link}\u0007${chalk.dim(relPath)}\u001b]8;;\u0007`,
-  );
-}
-
 export function logBuildFile({
   fullPath,
   maxLen,
