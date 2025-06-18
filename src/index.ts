@@ -1,92 +1,17 @@
 #!/usr/bin/env node
 
-import path from "path";
-import { buildAll } from "./build.js";
-import { logBuildOutput } from "./output.js";
-import { watch } from "./watch.js";
-import { serve } from "./server.js";
+import { config } from "./config.js";
+import { runDev } from "./commands/dev.js";
+import { runBuild } from "./commands/build.js";
 
-// CLI arg parsing (minimal)
-// Usage: typeflow dev|build [--src=srcdir] [--out=outdir] [--port=PORT] [--drop-console] [--drop-debugger]
-function parseArgs() {
-  const args = process.argv.slice(2);
-  const opts: Record<string, string | boolean> = {};
-  let mode = "dev";
-
-  // Check if first argument is 'build' or 'dev'
-  if (args[0] === "build") {
-    mode = "build";
-    args.shift(); // Remove the subcommand
-  } else if (args[0] === "dev") {
-    mode = "dev";
-    args.shift(); // Remove the subcommand
-  }
-
-  // Parse remaining args as options
-  for (let i = 0; i < args.length; i++) {
-    if (args[i].startsWith("--")) {
-      const [key, val] = args[i].replace(/^--/, "").split("=");
-      opts[key] = val === undefined ? true : val;
-    }
-  }
-  // Ensure drop-console and drop-debugger are booleans
-  opts["drop-console"] = Boolean(opts["drop-console"]);
-  opts["drop-debugger"] = Boolean(opts["drop-debugger"]);
-  return { mode, opts };
-}
-
-const { mode, opts } = parseArgs();
-const SRC_DIR = path.resolve(process.cwd(), (opts.src as string) || "src");
-// TODO: serve dev files from memory instead of from disk
-const DEV_DIR = path.resolve(process.cwd(), (opts.out as string) || "dev");
-const DIST_DIR = path.resolve(process.cwd(), (opts.out as string) || "dist");
-import net from "net";
-import chalk from "chalk";
-
-async function findAvailablePort(startPort: number): Promise<number> {
-  let port = startPort;
-  while (true) {
-    if (await isPortAvailable(port)) return port;
-    console.log(`Port ${port} is in use, trying another one...`);
-    port++;
-  }
-}
-
-function isPortAvailable(port: number): Promise<boolean> {
-  return new Promise((resolve) => {
-    const server = net.createServer();
-    server.once("error", () => resolve(false));
-    server.once("listening", () => {
-      server.close();
-      resolve(true);
-    });
-    server.listen(port);
-  });
-}
-
-// Entrypoint
 async function main() {
-  const dropConsole = Boolean(opts["drop-console"]);
-  const dropDebugger = Boolean(opts["drop-debugger"]);
-  if (mode === "dev") {
-    const start = Date.now();
-    await buildAll(DEV_DIR, SRC_DIR, false, dropConsole, dropDebugger);
-    const readyMs = Date.now() - start;
-    const portArg = opts.port ? Number(opts.port) : 3000;
-    const PORT = await findAvailablePort(portArg);
-    watch(DEV_DIR, SRC_DIR, PORT, dropConsole, dropDebugger);
-    serve(DEV_DIR, PORT, readyMs);
-  } else if (mode === "build") {
-    console.log();
-    console.log(
-      chalk.cyan("typeflow") +
-        chalk.rgb(21, 110, 245)(" building for production..."),
-    );
-    const start = Date.now();
-    await buildAll(DIST_DIR, SRC_DIR, true, dropConsole, dropDebugger);
-    logBuildOutput(DIST_DIR, start);
+  console.log(config);
+  if (config.mode === "dev") {
+    await runDev(config);
+  } else if (config.mode === "build") {
+    await runBuild(config);
   } else {
-    console.error(`Unknown mode: ${mode}`);
+    console.error(`Unknown mode: ${config.mode}`);
     process.exit(1);
   }
 }
