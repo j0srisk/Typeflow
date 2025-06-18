@@ -23,6 +23,11 @@ export async function watch(
   const entries = getEntryPoints(SRC_DIR).filter(
     (e) => e.endsWith(".ts") || e.endsWith(".js"),
   );
+
+  // Track files found during initial scan
+  const initialFiles = new Set<string>();
+  let watcherReady = false;
+
   await Promise.all(
     entries.map(async (entry) => {
       const metafile = await buildEntry(
@@ -59,12 +64,12 @@ export async function watch(
           dropDebugger,
         );
         if (metafile) depGraph.updateFromMetafile(file, metafile);
-        logDevAction({
-          action: "recompiled",
-          file,
-          srcDir: SRC_DIR,
-          port: PORT,
-        });
+        // logDevAction({
+        //   action: "recompiled",
+        //   file,
+        //   srcDir: SRC_DIR,
+        //   port: PORT,
+        // });
         return;
       }
       await Promise.all(
@@ -79,12 +84,12 @@ export async function watch(
             dropDebugger,
           );
           if (metafile) depGraph.updateFromMetafile(entry, metafile);
-          logDevAction({
-            action: "recompiled",
-            file: entry,
-            srcDir: SRC_DIR,
-            port: PORT,
-          });
+          // logDevAction({
+          //   action: "recompiled",
+          //   file: entry,
+          //   srcDir: SRC_DIR,
+          //   port: PORT,
+          // });
         }),
       );
     } else if (file.endsWith(".css")) {
@@ -96,45 +101,62 @@ export async function watch(
         fs.mkdirSync(cssOutDir, { recursive: true });
       }
       fs.copyFileSync(file, cssOut);
-      logDevAction({ action: "recompiled", file, srcDir: SRC_DIR, port: PORT });
+      // logDevAction({ action: "recompiled", file, srcDir: SRC_DIR, port: PORT });
     }
   });
 
   // On file add, treat as a potential new entry or dependency
   watcher.on("add", async (file) => {
-    if (file.endsWith(".ts") || file.endsWith(".js")) {
-      // Rebuild all entries (conservative, but safe for new deps)
-      await Promise.all(
-        entries.map(async (entry) => {
-          depGraph.removeEntry(entry);
-          const metafile = await buildEntry(
-            entry,
-            outDir,
-            SRC_DIR,
-            false,
-            dropConsole,
-            dropDebugger,
-          );
-          if (metafile) depGraph.updateFromMetafile(entry, metafile);
-          logDevAction({
-            action: "compiled",
-            file: entry,
-            srcDir: SRC_DIR,
-            port: PORT,
-          });
-        }),
-      );
-    } else if (file.endsWith(".css")) {
-      // Copy CSS file
-      const relPath = path.relative(SRC_DIR, file);
-      const cssOut = path.join(outDir, relPath);
-      const cssOutDir = path.dirname(cssOut);
-      if (!fs.existsSync(cssOutDir)) {
-        fs.mkdirSync(cssOutDir, { recursive: true });
+    if (file.endsWith(".ts") || file.endsWith(".js") || file.endsWith(".css")) {
+      if (!watcherReady) {
+        initialFiles.add(file);
+      } else {
+        logDevAction({
+          action: "added",
+          file,
+          srcDir: SRC_DIR,
+          port: PORT,
+        });
       }
-      fs.copyFileSync(file, cssOut);
-      logDevAction({ action: "compiled", file, srcDir: SRC_DIR, port: PORT });
+      // Existing build/copy logic (no extra logs)
+      if (file.endsWith(".ts") || file.endsWith(".js")) {
+        await Promise.all(
+          entries.map(async (entry) => {
+            depGraph.removeEntry(entry);
+            const metafile = await buildEntry(
+              entry,
+              outDir,
+              SRC_DIR,
+              false,
+              dropConsole,
+              dropDebugger,
+            );
+            if (metafile) depGraph.updateFromMetafile(entry, metafile);
+          }),
+        );
+      } else if (file.endsWith(".css")) {
+        const relPath = path.relative(SRC_DIR, file);
+        const cssOut = path.join(outDir, relPath);
+        const cssOutDir = path.dirname(cssOut);
+        if (!fs.existsSync(cssOutDir)) {
+          fs.mkdirSync(cssOutDir, { recursive: true });
+        }
+        fs.copyFileSync(file, cssOut);
+      }
     }
+  });
+
+  // After watcher is ready, log all 'available' files
+  watcher.on("ready", () => {
+    watcherReady = true;
+    Array.from(initialFiles).forEach((file) => {
+      logDevAction({
+        action: "available",
+        file,
+        srcDir: SRC_DIR,
+        port: PORT,
+      });
+    });
   });
 
   // On file removal, clean up outputs and dependency graph
@@ -144,12 +166,12 @@ export async function watch(
       const jsOut = path.join(outDir, `${base}.js`);
       if (fs.existsSync(jsOut)) fs.unlinkSync(jsOut);
       depGraph.removeEntry(file);
-      // logDevAction({ action: "removed", file, srcDir: SRC_DIR, port: PORT });
+      logDevAction({ action: "removed", file, srcDir: SRC_DIR, port: PORT });
     } else if (file.endsWith(".css")) {
       const relPath = path.relative(SRC_DIR, file);
       const cssOut = path.join(outDir, relPath);
       if (fs.existsSync(cssOut)) fs.unlinkSync(cssOut);
-      // logDevAction({ action: "removed", file, srcDir: SRC_DIR, port: PORT });
+      logDevAction({ action: "removed", file, srcDir: SRC_DIR, port: PORT });
     }
   });
 }
