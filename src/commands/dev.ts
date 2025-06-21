@@ -7,6 +7,7 @@ import path from "path";
 import fs from "fs";
 import { fileURLToPath } from "url";
 import { findAvailablePort, getLocalIP } from "../utils/network.js";
+import { startLiveReloadServer } from "../utils/live-reload.js";
 
 export async function runDev(config: Config) {
   const __filename = fileURLToPath(import.meta.url);
@@ -14,14 +15,18 @@ export async function runDev(config: Config) {
   const packageJsonPath = path.resolve(__dirname, "../../package.json");
   const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, "utf-8"));
   const version = packageJson.version;
-  const SERVE_PORT = await findAvailablePort(config.port);
+  const SERVE_PORT = await findAvailablePort(config.port, true);
   const SERVE_ORIGIN = `http://localhost:${SERVE_PORT}`;
+
+  const { broadcastReload, script: liveReloadScript } =
+    await startLiveReloadServer();
 
   const drop: ("console" | "debugger")[] = [];
   if (config.dropConsole) drop.push("console");
   if (config.dropDebugger) drop.push("debugger");
 
   let context: esbuild.BuildContext | null = null;
+  let isFirstBuild = true;
 
   async function startEsbuild(firstRun: boolean = false) {
     if (context) {
@@ -44,6 +49,33 @@ export async function runDev(config: Config) {
       define: {
         SERVE_ORIGIN: JSON.stringify(SERVE_ORIGIN),
       },
+      banner: {
+        js: liveReloadScript,
+      },
+      plugins: [
+        {
+          name: "typeflow-reloader",
+          setup(build) {
+            build.onEnd((result) => {
+              if (isFirstBuild) {
+                isFirstBuild = false;
+                return;
+              }
+              if (result.errors.length > 0) {
+                return;
+              }
+              // console.log(
+              //   `${chalk.dim(
+              //     new Date().toLocaleTimeString(),
+              //   )} ${chalk.cyan.bold("[typeflow]")} ${chalk.green(
+              //     "files changed, reloading...",
+              //   )}`,
+              // );
+              broadcastReload();
+            });
+          },
+        },
+      ],
       logLevel: "silent",
     });
 
@@ -108,7 +140,9 @@ export async function runDev(config: Config) {
   const reload = () => {
     clearTimeout(reloadTimeout);
     reloadTimeout = setTimeout(async () => {
+      isFirstBuild = true; // Reset for the new context
       await startEsbuild();
+      broadcastReload();
     }, 100);
   };
 

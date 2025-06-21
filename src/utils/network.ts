@@ -1,13 +1,16 @@
 import net from "net";
 import os from "os";
 
-export async function findAvailablePort(startPort: number): Promise<number> {
+export async function findAvailablePort(
+  startPort: number,
+  log: boolean = false,
+): Promise<number> {
   let port = startPort;
   while (true) {
     if (await isPortAvailable(port)) {
       return port;
     }
-    console.log(`Port ${port} is in use, trying another one...`);
+    if (log) console.log(`Port ${port} is in use, trying another one...`);
     port++;
   }
 }

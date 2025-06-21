@@ -1,6 +1,6 @@
 {
   "name": "@j0srisk/typeflow",
-  "version": "1.4.3",
+  "version": "1.5.0",
   "description": "Local dev tool for modular TypeScript+CSS workflow with Webflow.",
   "type": "module",
   "main": "build.js",
@@ -18,10 +18,12 @@
     "chalk": "^5.4.1",
     "chokidar": "^3.5.3",
     "esbuild": "^0.19.11",
-    "gzip-size": "^7.0.0"
+    "gzip-size": "^7.0.0",
+    "ws": "^8.18.2"
   },
   "devDependencies": {
     "@types/node": "^20.11.30",
+    "@types/ws": "^8.18.1",
     "@typescript-eslint/eslint-plugin": "^8.31.1",
     "@typescript-eslint/parser": "^8.31.1",
     "eslint": "^9.25.1",
