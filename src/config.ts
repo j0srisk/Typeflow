@@ -8,6 +8,7 @@ export interface Config {
   devDir: string;
   distDir: string;
   port: number;
+  host?: string; // Optional host (e.g. "localhost", "0.0.0.0")
   dropConsole: boolean;
   dropDebugger: boolean;
   minify: boolean;
@@ -26,7 +27,11 @@ function parseArgs() {
   for (const arg of args) {
     if (arg.startsWith("--")) {
       const [key, val] = arg.replace(/^--/, "").split("=");
-      opts[key] = val === undefined ? true : val;
+      if (key === "host") {
+        opts["host"] = val === undefined ? true : val;
+      } else {
+        opts[key] = val === undefined ? true : val;
+      }
     }
   }
 
@@ -44,6 +49,12 @@ function loadConfig(): Config {
     mode === "build" ? outDir : "dist",
   );
   const port = opts.port ? Number(opts.port) : 6173;
+  const host =
+    typeof opts.host === "string"
+      ? opts.host
+      : opts.host
+        ? "0.0.0.0"
+        : "localhost";
   const dropConsole = Boolean(opts["drop-console"]);
   const dropDebugger = Boolean(opts["drop-debugger"]);
   const minify = Boolean(opts.minify);
@@ -54,6 +65,7 @@ function loadConfig(): Config {
     devDir,
     distDir,
     port,
+    host,
     dropConsole,
     dropDebugger,
     minify,
