@@ -6,24 +6,7 @@ import chokidar from "chokidar";
 import path from "path";
 import fs from "fs";
 import { fileURLToPath } from "url";
-import { findAvailablePort } from "../utils/network.js";
-import os from "os";
-
-function getLocalIP() {
-  const interfaces = os.networkInterfaces();
-  for (const name of Object.keys(interfaces)) {
-    for (const iface of interfaces[name] || []) {
-      if (
-        iface.family === "IPv4" &&
-        !iface.internal &&
-        iface.address !== "127.0.0.1"
-      ) {
-        return iface.address;
-      }
-    }
-  }
-  return null;
-}
+import { findAvailablePort, getLocalIP } from "../utils/network.js";
 
 export async function runDev(config: Config) {
   const __filename = fileURLToPath(import.meta.url);

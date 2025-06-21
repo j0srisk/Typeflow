@@ -1,4 +1,5 @@
 import net from "net";
+import os from "os";
 
 export async function findAvailablePort(startPort: number): Promise<number> {
   let port = startPort;
@@ -37,4 +38,20 @@ export function isPortAvailable(port: number): Promise<boolean> {
       }
     });
   });
+}
+
+export function getLocalIP() {
+  const interfaces = os.networkInterfaces();
+  for (const name of Object.keys(interfaces)) {
+    for (const iface of interfaces[name] || []) {
+      if (
+        iface.family === "IPv4" &&
+        !iface.internal &&
+        iface.address !== "127.0.0.1"
+      ) {
+        return iface.address;
+      }
+    }
+  }
+  return null;
 }
