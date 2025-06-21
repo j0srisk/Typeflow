@@ -4,8 +4,15 @@ import * as esbuild from "esbuild";
 import chalk from "chalk";
 import chokidar from "chokidar";
 import path from "path";
+import fs from "fs";
+import { fileURLToPath } from "url";
 
 export async function runDev(config: Config) {
+  const __filename = fileURLToPath(import.meta.url);
+  const __dirname = path.dirname(__filename);
+  const packageJsonPath = path.resolve(__dirname, "../../package.json");
+  const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, "utf-8"));
+  const version = packageJson.version;
   const SERVE_PORT = config.port;
   const SERVE_ORIGIN = `http://localhost:${SERVE_PORT}`;
 
@@ -48,15 +55,16 @@ export async function runDev(config: Config) {
     if (firstRun) {
       console.log();
       console.log(
-        chalk.rgb(21, 110, 245).bold("  Typeflow") +
+        chalk.rgb(21, 110, 245).bold(`  TYPEFLOW v${version}`) +
           chalk.dim("  ready in ") +
-          chalk.white.bold(`${elapsed} ms`),
+          chalk.white.bold(`${elapsed}`) +
+          chalk.white(" ms"),
       );
       console.log();
       console.log(
-        chalk.cyan("  ➜") +
-          chalk.white.bold(`  Local:`) +
-          chalk.cyan(` http://localhost:${SERVE_PORT}/`),
+        chalk.rgb(21, 110, 245)("  ➜") +
+          chalk.white.bold(`  Local:   `) +
+          chalk.cyan(`http://localhost:${chalk.bold(String(SERVE_PORT))}/`),
       );
       console.log();
       firstRun = false;
