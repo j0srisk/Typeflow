@@ -1,12 +1,11 @@
 import { getEntryPoints } from "../utils/build.js";
-
 import { Config } from "../config.js";
-
 import * as esbuild from "esbuild";
 import chalk from "chalk";
+import chokidar from "chokidar";
+import path from "path";
 
 export async function runDev(config: Config) {
-  const start = Date.now();
   const SERVE_PORT = config.port;
   const SERVE_ORIGIN = `http://localhost:${SERVE_PORT}`;
 
@@ -14,42 +13,107 @@ export async function runDev(config: Config) {
   if (config.dropConsole) drop.push("console");
   if (config.dropDebugger) drop.push("debugger");
 
-  const entryPoints = getEntryPoints(config.srcDir).filter(
-    (e) => e.endsWith(".ts") || e.endsWith(".js") || e.endsWith(".css"),
-  );
+  let context: esbuild.BuildContext | null = null;
 
-  const context = await esbuild.context({
-    bundle: true,
-    entryPoints,
-    outdir: config.distDir,
-    minify: config.minify,
-    sourcemap: true,
-    target: "esnext",
-    drop,
-    define: {
-      SERVE_ORIGIN: JSON.stringify(SERVE_ORIGIN),
-    },
-    logLevel: "silent",
+  async function startEsbuild(firstRun: boolean = false) {
+    if (context) {
+      await context.dispose();
+    }
+
+    const start = Date.now();
+    const entryPoints = getEntryPoints(config.srcDir).filter(
+      (e) => e.endsWith(".ts") || e.endsWith(".js") || e.endsWith(".css"),
+    );
+
+    context = await esbuild.context({
+      bundle: true,
+      entryPoints,
+      outdir: config.distDir,
+      minify: config.minify,
+      sourcemap: true,
+      target: "esnext",
+      drop,
+      define: {
+        SERVE_ORIGIN: JSON.stringify(SERVE_ORIGIN),
+      },
+      logLevel: "silent",
+    });
+
+    await context.watch();
+    await context.serve({
+      port: SERVE_PORT,
+    });
+
+    const elapsed = Date.now() - start;
+    if (firstRun) {
+      console.log();
+      console.log(
+        chalk.rgb(21, 110, 245).bold("  Typeflow") +
+          chalk.dim("  ready in ") +
+          chalk.white.bold(`${elapsed} ms`),
+      );
+      console.log();
+      console.log(
+        chalk.cyan("  ➜") +
+          chalk.white.bold(`  Local:`) +
+          chalk.cyan(` http://localhost:${SERVE_PORT}/`),
+      );
+      console.log();
+      firstRun = false;
+    }
+  }
+
+  await startEsbuild(true);
+
+  const watcher = chokidar.watch(config.srcDir, {
+    ignored: /(^|[/\\])\../, // ignore dotfiles
+    persistent: true,
+    ignoreInitial: true,
   });
 
-  await context.watch();
-  await context.serve({
-    port: SERVE_PORT,
-  });
+  let reloadTimeout: ReturnType<typeof setTimeout>;
+  let lastUnlinked: { path: string; time: number } | null = null;
 
-  const elapsed = Date.now() - start;
-  console.log();
-  console.log(
-    chalk.rgb(21, 110, 245).bold("  Typeflow") +
-      chalk.dim("  ready in ") +
-      chalk.white.bold(elapsed) +
-      chalk.white(" ms"),
-  );
-  console.log();
-  console.log(
-    chalk.cyan("  ➜") +
-      chalk.white.bold(`  Local:`) +
-      chalk.cyan(` http://localhost:${SERVE_PORT}/`),
-  );
-  console.log();
+  const reload = () => {
+    clearTimeout(reloadTimeout);
+    reloadTimeout = setTimeout(async () => {
+      await startEsbuild();
+    }, 100);
+  };
+
+  watcher
+    .on("add", (filePath) => {
+      const now = Date.now();
+      const time = new Date().toLocaleTimeString();
+      if (lastUnlinked && now - lastUnlinked.time < 100) {
+        console.log(
+          `${chalk.dim(time)} ${chalk.cyan.bold("[typeflow]")} ${chalk.blue(
+            "file renamed",
+          )} ${chalk.dim(path.relative(process.cwd(), filePath))}`,
+        );
+        lastUnlinked = null;
+      } else {
+        console.log(
+          `${chalk.dim(time)} ${chalk.cyan.bold("[typeflow]")} ${chalk.green(
+            "file added",
+          )} ${chalk.dim(path.relative(process.cwd(), filePath))}`,
+        );
+      }
+      reload();
+    })
+    .on("unlink", (filePath) => {
+      lastUnlinked = { path: filePath, time: Date.now() };
+      setTimeout(() => {
+        if (lastUnlinked && lastUnlinked.path === filePath) {
+          const time = new Date().toLocaleTimeString();
+          console.log(
+            `${chalk.dim(time)} ${chalk.cyan.bold("[typeflow]")} ${chalk.red(
+              "file removed",
+            )} ${chalk.dim(path.relative(process.cwd(), filePath))}`,
+          );
+          lastUnlinked = null;
+        }
+      }, 100);
+      reload();
+    });
 }
