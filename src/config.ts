@@ -43,7 +43,7 @@ function loadConfig(): Config {
     process.cwd(),
     mode === "build" ? outDir : "dist",
   );
-  const port = opts.port ? Number(opts.port) : 3000;
+  const port = opts.port ? Number(opts.port) : 6173;
   const dropConsole = Boolean(opts["drop-console"]);
   const dropDebugger = Boolean(opts["drop-debugger"]);
   const minify = Boolean(opts.minify);

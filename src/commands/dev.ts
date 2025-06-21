@@ -6,6 +6,7 @@ import chokidar from "chokidar";
 import path from "path";
 import fs from "fs";
 import { fileURLToPath } from "url";
+import { findAvailablePort } from "../utils/network.js";
 
 export async function runDev(config: Config) {
   const __filename = fileURLToPath(import.meta.url);
@@ -13,7 +14,7 @@ export async function runDev(config: Config) {
   const packageJsonPath = path.resolve(__dirname, "../../package.json");
   const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, "utf-8"));
   const version = packageJson.version;
-  const SERVE_PORT = config.port;
+  const SERVE_PORT = await findAvailablePort(config.port);
   const SERVE_ORIGIN = `http://localhost:${SERVE_PORT}`;
 
   const drop: ("console" | "debugger")[] = [];
