@@ -20,7 +20,7 @@ export async function startLiveReloadServer() {
     });
   };
 
-  const script = `new WebSocket('ws://' + location.hostname + ':${port}').onmessage = () => location.reload();`;
+  const script = `new WebSocket('ws://localhost:${port}').onmessage = () => location.reload();`;
 
   return { broadcastReload, script };
 }

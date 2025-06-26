@@ -6,7 +6,7 @@ import chokidar from "chokidar";
 import path from "path";
 import fs from "fs";
 import { fileURLToPath } from "url";
-import { findAvailablePort, getLocalIP } from "../utils/network.js";
+import { findAvailablePort } from "../utils/network.js";
 import { startLiveReloadServer } from "../utils/live-reload.js";
 
 export async function runDev(config: Config) {
@@ -82,7 +82,7 @@ export async function runDev(config: Config) {
     await context.watch();
     await context.serve({
       port: SERVE_PORT,
-      host: config.host || "localhost",
+      host: "localhost",
     });
 
     const elapsed = Date.now() - start;
@@ -102,26 +102,26 @@ export async function runDev(config: Config) {
           chalk.cyan(`http://localhost:${chalk.bold(String(SERVE_PORT))}/`),
       );
       // If host is not localhost, print network address
-      if (config.host && config.host !== "localhost") {
-        const localIP = getLocalIP();
-        if (localIP) {
-          console.log(
-            chalk.rgb(21, 110, 245)("  ➜") +
-              chalk.white.bold(`  Network: `) +
-              chalk.cyan(
-                `http://${localIP}:${chalk.bold(String(SERVE_PORT))}/`,
-              ),
-          );
-        }
-      } else {
-        console.log(
-          chalk.rgb(21, 110, 245)("  ➜") +
-            chalk.dim.bold("  Network: ") +
-            chalk.dim("use") +
-            chalk.bold(" --host") +
-            chalk.dim(" to expose"),
-        );
-      }
+      // if (config.host && config.host !== "localhost") {
+      //   const localIP = getLocalIP();
+      //   if (localIP) {
+      //     console.log(
+      //       chalk.rgb(21, 110, 245)("  ➜") +
+      //         chalk.white.bold(`  Network: `) +
+      //         chalk.cyan(
+      //           `http://${localIP}:${chalk.bold(String(SERVE_PORT))}/`,
+      //         ),
+      //     );
+      //   }
+      // } else {
+      //   console.log(
+      //     chalk.rgb(21, 110, 245)("  ➜") +
+      //       chalk.dim.bold("  Network: ") +
+      //       chalk.dim("use") +
+      //       chalk.bold(" --host") +
+      //       chalk.dim(" to expose"),
+      //   );
+      // }
       console.log();
     }
   }
