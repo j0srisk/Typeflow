@@ -1,6 +1,6 @@
 {
   "name": "@j0srisk/typeflow",
-  "version": "1.5.1",
+  "version": "1.5.2",
   "description": "Local dev tool for modular TypeScript+CSS workflow with Webflow.",
   "type": "module",
   "main": "build.js",
@@ -22,6 +22,7 @@
     "ws": "^8.18.2"
   },
   "devDependencies": {
+    "@types/http-proxy": "^1.17.16",
     "@types/node": "^20.11.30",
     "@types/selfsigned": "^2.1.0",
     "@types/ws": "^8.18.1",
@@ -30,6 +31,7 @@
     "eslint": "^9.25.1",
     "eslint-config-prettier": "^10.1.2",
     "eslint-plugin-prettier": "^5.2.6",
+    "http-proxy": "^1.18.1",
     "prettier": "^3.5.3",
     "selfsigned": "^2.4.1",
     "ts-node": "^10.9.2",

@@ -6,7 +6,11 @@ import chokidar from "chokidar";
 import path from "path";
 import fs from "fs";
 import { fileURLToPath } from "url";
-import { findAvailablePort } from "../utils/network.js";
+import https from "https";
+import http from "http";
+import httpProxy from "http-proxy";
+import selfsigned from "selfsigned";
+import { findAvailablePort, getLocalIPs } from "../utils/network.js";
 import { startLiveReloadServer } from "../utils/live-reload.js";
 
 export async function runDev(config: Config) {
@@ -16,10 +20,46 @@ export async function runDev(config: Config) {
   const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, "utf-8"));
   const version = packageJson.version;
   const SERVE_PORT = await findAvailablePort(config.port, true);
-  const SERVE_ORIGIN = `http://localhost:${SERVE_PORT}`;
+  const ESBUILD_PORT = await findAvailablePort(SERVE_PORT + 1);
+
+  let server: http.Server | https.Server;
+  const protocol = config.https ? "https" : "http";
+
+  const proxy = httpProxy.createProxyServer({
+    target: {
+      host: "localhost",
+      port: ESBUILD_PORT,
+    },
+  });
+
+  if (config.https) {
+    const attrs = [{ name: "commonName", value: "localhost" }];
+    const pems = selfsigned.generate(attrs, {
+      days: 365,
+      algorithm: "sha256",
+    });
+    server = https.createServer(
+      { key: pems.private, cert: pems.cert },
+      (req, res) => {
+        proxy.web(req, res);
+      },
+    );
+  } else {
+    server = http.createServer((req, res) => {
+      proxy.web(req, res);
+    });
+  }
+
+  proxy.on("error", (err, req, res) => {
+    console.log(chalk.red(`Proxy error: ${err.message}`));
+    if (res instanceof http.ServerResponse) {
+      res.writeHead(500, { "Content-Type": "text/plain" });
+      res.end(`Proxy error: ${err.message}`);
+    }
+  });
 
   const { broadcastReload, script: liveReloadScript } =
-    await startLiveReloadServer();
+    await startLiveReloadServer(server);
 
   const drop: ("console" | "debugger")[] = [];
   if (config.dropConsole) drop.push("console");
@@ -46,9 +86,6 @@ export async function runDev(config: Config) {
       sourcemap: true,
       target: "esnext",
       drop,
-      define: {
-        SERVE_ORIGIN: JSON.stringify(SERVE_ORIGIN),
-      },
       banner: {
         js: liveReloadScript,
       },
@@ -81,9 +118,11 @@ export async function runDev(config: Config) {
 
     await context.watch();
     await context.serve({
-      port: SERVE_PORT,
-      host: "localhost",
+      port: ESBUILD_PORT,
+      host: "localhost", // esbuild always serves on localhost
     });
+
+    server.listen(SERVE_PORT, config.host);
 
     const elapsed = Date.now() - start;
     if (firstRun) {
@@ -96,32 +135,34 @@ export async function runDev(config: Config) {
       );
       console.log();
       // Always print local
+      const localURL = `${protocol}://localhost:${chalk.bold(String(SERVE_PORT))}`;
       console.log(
         chalk.rgb(21, 110, 245)("  ➜") +
           chalk.white.bold(`  Local:   `) +
-          chalk.cyan(`http://localhost:${chalk.bold(String(SERVE_PORT))}/`),
+          chalk.cyan(localURL + "/"),
       );
       // If host is not localhost, print network address
-      // if (config.host && config.host !== "localhost") {
-      //   const localIP = getLocalIP();
-      //   if (localIP) {
-      //     console.log(
-      //       chalk.rgb(21, 110, 245)("  ➜") +
-      //         chalk.white.bold(`  Network: `) +
-      //         chalk.cyan(
-      //           `http://${localIP}:${chalk.bold(String(SERVE_PORT))}/`,
-      //         ),
-      //     );
-      //   }
-      // } else {
-      //   console.log(
-      //     chalk.rgb(21, 110, 245)("  ➜") +
-      //       chalk.dim.bold("  Network: ") +
-      //       chalk.dim("use") +
-      //       chalk.bold(" --host") +
-      //       chalk.dim(" to expose"),
-      //   );
-      // }
+      if (config.host !== "localhost") {
+        const localIPs = getLocalIPs();
+        for (const ip of localIPs) {
+          const networkURL = `${protocol}://${ip}:${chalk.bold(
+            String(SERVE_PORT),
+          )}`;
+          console.log(
+            chalk.rgb(21, 110, 245)("  ➜") +
+              chalk.white.bold(`  Network: `) +
+              chalk.cyan(networkURL + "/"),
+          );
+        }
+      } else {
+        console.log(
+          chalk.rgb(21, 110, 245)("  ➜") +
+            chalk.dim.bold("  Network: ") +
+            chalk.dim("use") +
+            chalk.bold(" --host") +
+            chalk.dim(" to expose"),
+        );
+      }
       console.log();
     }
   }

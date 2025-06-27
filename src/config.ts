@@ -8,9 +8,11 @@ export interface Config {
   devDir: string;
   distDir: string;
   port: number;
+  host: string;
   dropConsole: boolean;
   dropDebugger: boolean;
   minify: boolean;
+  https: boolean;
 }
 
 function parseArgs() {
@@ -44,9 +46,14 @@ function loadConfig(): Config {
     mode === "build" ? outDir : "dist",
   );
   const port = opts.port ? Number(opts.port) : 6173;
+  let host = "localhost";
+  if (opts.host) {
+    host = opts.host === true ? "0.0.0.0" : (opts.host as string);
+  }
   const dropConsole = Boolean(opts["drop-console"]);
   const dropDebugger = Boolean(opts["drop-debugger"]);
   const minify = Boolean(opts.minify);
+  const https = Boolean(opts.https);
 
   return {
     mode,
@@ -54,9 +61,11 @@ function loadConfig(): Config {
     devDir,
     distDir,
     port,
+    host,
     dropConsole,
     dropDebugger,
     minify,
+    https,
   };
 }
 

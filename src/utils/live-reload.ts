@@ -1,11 +1,8 @@
 import { WebSocketServer } from "ws";
-import { findAvailablePort } from "./network.js";
+import type { Server } from "http";
 
-const LIVE_RELOAD_PORT_START = 24678;
-
-export async function startLiveReloadServer() {
-  const port = await findAvailablePort(LIVE_RELOAD_PORT_START);
-  const wss = new WebSocketServer({ port });
+export async function startLiveReloadServer(server: Server) {
+  const wss = new WebSocketServer({ server });
 
   wss.on("connection", (ws) => {
     ws.on("error", console.error);
@@ -20,7 +17,7 @@ export async function startLiveReloadServer() {
     });
   };
 
-  const script = `new WebSocket('ws://localhost:${port}').onmessage = () => location.reload();`;
+  const script = `const u = new URL(document.currentScript.src); const p = u.protocol === 'https:' ? 'wss' : 'ws'; new WebSocket(p + '://' + u.host).onmessage = () => location.reload();`;
 
   return { broadcastReload, script };
 }

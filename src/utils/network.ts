@@ -43,8 +43,9 @@ export function isPortAvailable(port: number): Promise<boolean> {
   });
 }
 
-export function getLocalIP() {
+export function getLocalIPs() {
   const interfaces = os.networkInterfaces();
+  const addresses: string[] = [];
   for (const name of Object.keys(interfaces)) {
     for (const iface of interfaces[name] || []) {
       if (
@@ -52,9 +53,9 @@ export function getLocalIP() {
         !iface.internal &&
         iface.address !== "127.0.0.1"
       ) {
-        return iface.address;
+        addresses.push(iface.address);
       }
     }
   }
-  return null;
+  return addresses;
 }
