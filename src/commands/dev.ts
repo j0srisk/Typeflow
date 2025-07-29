@@ -1,225 +1,245 @@
-import { getEntryPoints } from "../utils/build.js";
-import { Config } from "../config.js";
-import * as esbuild from "esbuild";
-import chalk from "chalk";
-import chokidar from "chokidar";
-import path from "path";
-import fs from "fs";
-import { fileURLToPath } from "url";
-import https from "https";
-import http from "http";
-import httpProxy from "http-proxy";
-import selfsigned from "selfsigned";
-import { findAvailablePort, getLocalIPs } from "../utils/network.js";
-import { startLiveReloadServer } from "../utils/live-reload.js";
+import * as esbuild from 'esbuild';
+import * as path from 'path';
+import * as fs from 'fs';
+import { WebSocketServer } from 'ws';
+import { logger } from '../utils/logger';
+import { FileWatcher, scanDirectory } from '../utils/file-watcher';
+import { cleanDirectory, ensureDirectory } from '../utils/fs-utils';
 
-export async function runDev(config: Config) {
-  const __filename = fileURLToPath(import.meta.url);
-  const __dirname = path.dirname(__filename);
-  const packageJsonPath = path.resolve(__dirname, "../../package.json");
-  const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, "utf-8"));
-  const version = packageJson.version;
-  const SERVE_PORT = await findAvailablePort(config.port, true);
-  const ESBUILD_PORT = await findAvailablePort(SERVE_PORT + 1);
+interface DevOptions {
+  port: string;
+  reload: boolean;
+}
 
-  let server: http.Server | https.Server;
-  const protocol = config.https ? "https" : "http";
+export async function devCommand(options: DevOptions) {
+  const startTime = Date.now();
+  const port = parseInt(options.port);
+  const srcDir = path.resolve(process.cwd(), 'src');
+  
+  // Check if src directory exists
+  if (!fs.existsSync(srcDir)) {
+    logger.error('src directory not found. Please create a src folder with your TypeScript/CSS files.');
+    process.exit(1);
+  }
 
-  const proxy = httpProxy.createProxyServer({
-    target: {
-      host: "localhost",
-      port: ESBUILD_PORT,
+  logger.info('Starting development server...');
+
+  // Clean dist directory on startup
+  const distDir = path.resolve(process.cwd(), 'dist');
+  cleanDirectory(distDir);
+  ensureDirectory(distDir);
+
+  // Scan for initial files
+  let entryPoints = scanDirectory(srcDir);
+  
+  if (entryPoints.length === 0) {
+    logger.warn('No TypeScript, JavaScript, or CSS files found in src directory.');
+    logger.info('Watching for new files...');
+  }
+
+  // WebSocket server for live reload
+  let wsServer: WebSocketServer | null = null;
+  if (options.reload) {
+    wsServer = new WebSocketServer({ port: port + 1 });
+    wsServer.on('connection', (ws) => {
+      logger.debug('Client connected to live reload');
+    });
+  }
+
+  // Create esbuild context with current files
+  let ctx = await createESBuildContext(entryPoints, srcDir, port, options.reload);
+
+  // Start the development server (only once)
+  const serveResult = await ctx.serve({
+    servedir: 'dist',
+    port: port,
+    host: 'localhost'
+  });
+  
+  const servePort = serveResult.port;
+
+  // Set up file watcher
+  const fileWatcher = new FileWatcher(srcDir);
+  
+  // Handle file changes
+  fileWatcher.on('change', async (event) => {
+    const changeStart = Date.now();
+    logger.debug(`File changed: ${event.relativePath}`);
+    
+    try {
+      await ctx.rebuild();
+      const duration = Date.now() - changeStart;
+      logger.logFileChange(event.relativePath, duration);
+      notifyClients(wsServer);
+    } catch (error) {
+      logger.error(`Build failed: ${error}`);
+    }
+  });
+
+  // Handle new files
+  fileWatcher.on('add', async (event) => {
+    if (!event.path.match(/\.(ts|js|css)$/)) return;
+    
+    const changeStart = Date.now();
+    logger.debug(`New file added: ${event.relativePath}`);
+    
+    try {
+      // For new files, we need to restart everything to pick up new entry points
+      logger.info('Restarting server to pick up new files...');
+      
+      // Stop current server and file watcher
+      fileWatcher.stop();
+      await ctx.dispose();
+      
+      // Restart with new scan
+      entryPoints = scanDirectory(srcDir);
+      cleanDirectory(distDir);
+      ensureDirectory(distDir);
+      
+      // Create new context and server
+      ctx = await createESBuildContext(entryPoints, srcDir, port, options.reload);
+      await ctx.serve({
+        servedir: 'dist',
+        port: port,
+        host: 'localhost'
+      });
+      
+      await ctx.rebuild();
+      
+      // Restart file watcher
+      fileWatcher.start();
+      
+      const duration = Date.now() - changeStart;
+      logger.success(`Server restarted with new file: ${event.relativePath} (+${duration}ms)`);
+      notifyClients(wsServer);
+    } catch (error) {
+      logger.error(`Failed to restart server: ${error}`);
+    }
+  });
+
+  // Handle deleted files
+  fileWatcher.on('unlink', async (event) => {
+    if (!event.path.match(/\.(ts|js|css)$/)) return;
+    
+    const changeStart = Date.now();
+    logger.debug(`File deleted: ${event.relativePath}`);
+    
+    try {
+      // For deleted files, we need to restart everything to remove from entry points
+      logger.info('Restarting server to remove deleted files...');
+      
+      // Stop current server and file watcher
+      fileWatcher.stop();
+      await ctx.dispose();
+      
+      // Restart with new scan
+      entryPoints = scanDirectory(srcDir);
+      cleanDirectory(distDir);
+      ensureDirectory(distDir);
+      
+      // Create new context and server
+      ctx = await createESBuildContext(entryPoints, srcDir, port, options.reload);
+      await ctx.serve({
+        servedir: 'dist',
+        port: port,
+        host: 'localhost'
+      });
+      
+      if (entryPoints.length > 0) {
+        await ctx.rebuild();
+      }
+      
+      // Restart file watcher
+      fileWatcher.start();
+      
+      const duration = Date.now() - changeStart;
+      logger.warn(`Server restarted after file deletion: ${event.relativePath} (+${duration}ms)`);
+      notifyClients(wsServer);
+    } catch (error) {
+      logger.error(`Failed to restart server: ${error}`);
+    }
+  });
+
+  // Start file watcher
+  fileWatcher.start();
+
+  // Initial build
+  if (entryPoints.length > 0) {
+    try {
+      await ctx.rebuild();
+    } catch (error) {
+      logger.error(`Initial build failed: ${error}`);
+      process.exit(1);
+    }
+  }
+
+  const duration = Date.now() - startTime;
+  logger.logServerStart(servePort);
+  logger.logReady(duration);
+
+  // Handle cleanup on exit
+  process.on('SIGINT', async () => {
+    logger.info('Shutting down...');
+    fileWatcher.stop();
+    await ctx.dispose();
+    if (wsServer) {
+      wsServer.close();
+    }
+    process.exit(0);
+  });
+}
+
+async function createESBuildContext(
+  entryPoints: string[], 
+  srcDir: string, 
+  port: number, 
+  enableReload: boolean
+): Promise<esbuild.BuildContext> {
+  return esbuild.context({
+    entryPoints,
+    bundle: false,
+    outdir: 'dist',
+    outbase: srcDir,
+    format: 'esm',
+    target: 'es2020',
+    loader: {
+      '.ts': 'ts',
+      '.js': 'js',
+      '.css': 'css'
     },
-  });
+    sourcemap: true,
+    write: true,
+    plugins: enableReload ? [
+      {
+        name: 'live-reload-inject',
+        setup(build) {
+          build.onLoad({ filter: /\.(ts|js)$/ }, async (args) => {
+            const contents = await fs.promises.readFile(args.path, 'utf8');
+            const injectedCode = `
+// Live reload client
+if (typeof window !== 'undefined') {
+  const ws = new WebSocket('ws://localhost:${port + 1}');
+  ws.onmessage = () => window.location.reload();
+}
 
-  if (config.https) {
-    const attrs = [{ name: "commonName", value: "localhost" }];
-    const pems = selfsigned.generate(attrs, {
-      days: 365,
-      algorithm: "sha256",
-    });
-    server = https.createServer(
-      { key: pems.private, cert: pems.cert },
-      (req, res) => {
-        proxy.web(req, res);
-      },
-    );
-  } else {
-    server = http.createServer((req, res) => {
-      proxy.web(req, res);
+${contents}`;
+            return {
+              contents: injectedCode,
+              loader: 'ts'
+            };
+          });
+        }
+      }
+    ] : []
+  });
+}
+
+function notifyClients(wsServer: WebSocketServer | null): void {
+  if (wsServer) {
+    wsServer.clients.forEach((client) => {
+      if (client.readyState === 1) { // WebSocket.OPEN
+        client.send('reload');
+      }
     });
   }
-
-  proxy.on("error", (err, req, res) => {
-    console.log(chalk.red(`Proxy error: ${err.message}`));
-    if (res instanceof http.ServerResponse) {
-      res.writeHead(500, { "Content-Type": "text/plain" });
-      res.end(`Proxy error: ${err.message}`);
-    }
-  });
-
-  const { broadcastReload, script: liveReloadScript } =
-    await startLiveReloadServer(server);
-
-  const drop: ("console" | "debugger")[] = [];
-  if (config.dropConsole) drop.push("console");
-  if (config.dropDebugger) drop.push("debugger");
-
-  let context: esbuild.BuildContext | null = null;
-  let isFirstBuild = true;
-
-  async function startEsbuild(firstRun: boolean = false) {
-    if (context) {
-      await context.dispose();
-    }
-
-    const start = Date.now();
-    const entryPoints = getEntryPoints(config.srcDir).filter(
-      (e) => e.endsWith(".ts") || e.endsWith(".js") || e.endsWith(".css"),
-    );
-
-    context = await esbuild.context({
-      bundle: true,
-      entryPoints,
-      outdir: config.distDir,
-      minify: config.minify,
-      sourcemap: true,
-      target: "esnext",
-      drop,
-      banner: {
-        js: liveReloadScript,
-      },
-      plugins: [
-        {
-          name: "typeflow-reloader",
-          setup(build) {
-            build.onEnd((result) => {
-              if (isFirstBuild) {
-                isFirstBuild = false;
-                return;
-              }
-              if (result.errors.length > 0) {
-                return;
-              }
-              // console.log(
-              //   `${chalk.dim(
-              //     new Date().toLocaleTimeString(),
-              //   )} ${chalk.cyan.bold("[typeflow]")} ${chalk.green(
-              //     "files changed, reloading...",
-              //   )}`,
-              // );
-              broadcastReload();
-            });
-          },
-        },
-      ],
-      logLevel: "silent",
-    });
-
-    await context.watch();
-    await context.serve({
-      port: ESBUILD_PORT,
-      host: "localhost", // esbuild always serves on localhost
-    });
-
-    server.listen(SERVE_PORT, config.host);
-
-    const elapsed = Date.now() - start;
-    if (firstRun) {
-      console.log();
-      console.log(
-        chalk.rgb(21, 110, 245).bold(`  TYPEFLOW v${version}`) +
-          chalk.dim("  ready in ") +
-          chalk.white.bold(`${elapsed}`) +
-          chalk.white(" ms"),
-      );
-      console.log();
-      // Always print local
-      const localURL = `${protocol}://localhost:${chalk.bold(String(SERVE_PORT))}`;
-      console.log(
-        chalk.rgb(21, 110, 245)("  ➜") +
-          chalk.white.bold(`  Local:   `) +
-          chalk.cyan(localURL + "/"),
-      );
-      // If host is not localhost, print network address
-      if (config.host !== "localhost") {
-        const localIPs = getLocalIPs();
-        for (const ip of localIPs) {
-          const networkURL = `${protocol}://${ip}:${chalk.bold(
-            String(SERVE_PORT),
-          )}`;
-          console.log(
-            chalk.rgb(21, 110, 245)("  ➜") +
-              chalk.white.bold(`  Network: `) +
-              chalk.cyan(networkURL + "/"),
-          );
-        }
-      } else {
-        console.log(
-          chalk.rgb(21, 110, 245)("  ➜") +
-            chalk.dim.bold("  Network: ") +
-            chalk.dim("use") +
-            chalk.bold(" --host") +
-            chalk.dim(" to expose"),
-        );
-      }
-      console.log();
-    }
-  }
-
-  await startEsbuild(true);
-
-  const watcher = chokidar.watch(config.srcDir, {
-    ignored: /(^|[/\\])\../, // ignore dotfiles
-    persistent: true,
-    ignoreInitial: true,
-  });
-
-  let reloadTimeout: ReturnType<typeof setTimeout>;
-  let lastUnlinked: { path: string; time: number } | null = null;
-
-  const reload = () => {
-    clearTimeout(reloadTimeout);
-    reloadTimeout = setTimeout(async () => {
-      isFirstBuild = true; // Reset for the new context
-      await startEsbuild();
-      broadcastReload();
-    }, 100);
-  };
-
-  watcher
-    .on("add", (filePath) => {
-      const now = Date.now();
-      const time = new Date().toLocaleTimeString();
-      if (lastUnlinked && now - lastUnlinked.time < 100) {
-        console.log(
-          `${chalk.dim(time)} ${chalk.cyan.bold("[typeflow]")} ${chalk.blue(
-            "file renamed",
-          )} ${chalk.dim(path.relative(process.cwd(), filePath))}`,
-        );
-        lastUnlinked = null;
-      } else {
-        console.log(
-          `${chalk.dim(time)} ${chalk.cyan.bold("[typeflow]")} ${chalk.green(
-            "file added",
-          )} ${chalk.dim(path.relative(process.cwd(), filePath))}`,
-        );
-      }
-      reload();
-    })
-    .on("unlink", (filePath) => {
-      lastUnlinked = { path: filePath, time: Date.now() };
-      setTimeout(() => {
-        if (lastUnlinked && lastUnlinked.path === filePath) {
-          const time = new Date().toLocaleTimeString();
-          console.log(
-            `${chalk.dim(time)} ${chalk.cyan.bold("[typeflow]")} ${chalk.red(
-              "file removed",
-            )} ${chalk.dim(path.relative(process.cwd(), filePath))}`,
-          );
-          lastUnlinked = null;
-        }
-      }, 100);
-      reload();
-    });
 }

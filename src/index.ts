@@ -1,18 +1,28 @@
 #!/usr/bin/env node
+import { Command } from 'commander';
+import { devCommand } from './commands/dev';
+import { buildCommand } from './commands/build';
 
-import { config } from "./config.js";
-import { runDev } from "./commands/dev.js";
-import { runBuild } from "./commands/build.js";
+const program = new Command();
 
-async function main() {
-  if (config.mode === "dev") {
-    await runDev(config);
-  } else if (config.mode === "build") {
-    await runBuild(config);
-  } else {
-    console.error(`Unknown mode: ${config.mode}`);
-    process.exit(1);
-  }
-}
+program
+  .name('typeflow')
+  .description('Local development server for TypeScript/JavaScript and CSS files in Webflow projects')
+  .version('1.0.0');
 
-await main();
+program
+  .command('dev')
+  .description('Start development server with live reload')
+  .option('-p, --port <port>', 'Port to run on', '3000')
+  .option('--no-reload', 'Disable live reload')
+  .action(devCommand);
+
+program
+  .command('build')
+  .description('Build files for production')
+  .option('--minify', 'Minify output files')
+  .option('--drop-console', 'Remove console statements')
+  .option('--sourcemap', 'Generate source maps')
+  .action(buildCommand);
+
+program.parse();
