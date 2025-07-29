@@ -50,10 +50,10 @@ export async function devCommand(options: DevOptions) {
   // Create esbuild context with actual file paths - esbuild watch will detect changes to these files
   const ctx = await esbuild.context({
     entryPoints: [`${srcDir}/**/*.ts`, `${srcDir}/**/*.js`, `${srcDir}/**/*.css`],
-    bundle: false,
+    bundle: true,
     outdir: distDir,
     outbase: srcDir,
-    format: 'esm',
+    format: 'iife',
     target: 'es2020',
     loader: {
       '.ts': 'ts',
@@ -68,14 +68,14 @@ export async function devCommand(options: DevOptions) {
         setup(build) {
           build.onLoad({ filter: /\.(ts|js)$/ }, async (args) => {
             const contents = await fs.promises.readFile(args.path, 'utf8');
-            const injectedCode = `
-// Live reload client
-if (typeof window !== 'undefined') {
-  const ws = new WebSocket('ws://localhost:${port + 1}');
-  ws.onmessage = () => window.location.reload();
-}
-
-${contents}`;
+            
+            // Read live-reload client code
+            const liveReloadPath = path.resolve(__dirname, '../client/live-reload.ts');
+            let liveReloadCode = await fs.promises.readFile(liveReloadPath, 'utf8');
+            // Replace placeholder with actual port
+            liveReloadCode = liveReloadCode.replace('{{PORT}}', (port + 1).toString());
+            
+            const injectedCode = `${liveReloadCode}\n${contents}`;
             return {
               contents: injectedCode,
               loader: 'ts'

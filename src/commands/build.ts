@@ -30,10 +30,10 @@ export async function buildCommand(options: BuildOptions) {
   try {
     const result = await esbuild.build({
       entryPoints: [`${srcDir}/**/*.ts`, `${srcDir}/**/*.js`, `${srcDir}/**/*.css`],
-      bundle: false,
+      bundle: true,
       outdir: outDir,
       outbase: srcDir,
-      format: 'esm',
+      format: 'iife',
       target: 'es2020',
       loader: {
         '.ts': 'ts',
