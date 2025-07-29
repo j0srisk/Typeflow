@@ -8,6 +8,7 @@ import { cleanDirectory, ensureDirectory } from '../utils/fs-utils';
 interface DevOptions {
   port: string;
   reload: boolean;
+  debug: boolean;
 }
 
 export async function devCommand(options: DevOptions) {
@@ -16,13 +17,16 @@ export async function devCommand(options: DevOptions) {
   const srcDir = path.resolve(process.cwd(), 'src');
   const distDir = path.resolve(process.cwd(), 'dist');
   
+  // Set debug level
+  logger.setDebug(options.debug);
+  
   // Check if src directory exists
   if (!fs.existsSync(srcDir)) {
     logger.error('src directory not found. Please create a src folder with your TypeScript/CSS files.');
     process.exit(1);
   }
 
-  logger.info('Starting development server...');
+  logger.debug('Starting development server...');
 
   // Clean dist directory on startup
   cleanDirectory(distDir);
@@ -50,6 +54,7 @@ export async function devCommand(options: DevOptions) {
   // Create esbuild context with actual file paths - esbuild watch will detect changes to these files
   const ctx = await esbuild.context({
     entryPoints: [`${srcDir}/**/*.ts`, `${srcDir}/**/*.js`, `${srcDir}/**/*.css`],
+    logLevel: options.debug ? 'info' : 'error', // Show warnings in debug mode
     bundle: true,
     outdir: distDir,
     outbase: srcDir,
@@ -115,12 +120,11 @@ export async function devCommand(options: DevOptions) {
   const servePort = serveResult.port;
   const duration = Date.now() - startTime;
   
-  logger.logServerStart(servePort);
-  logger.logReady(duration);
+  logger.logServerStart(servePort, duration);
 
   // Handle cleanup on exit
   process.on('SIGINT', async () => {
-    logger.info('Shutting down...');
+    logger.debug('Shutting down...');
     await ctx.dispose();
     if (wsServer) {
       wsServer.close();

@@ -8,6 +8,7 @@ export interface LogOptions {
 
 class Logger {
   private startTime = Date.now();
+  private debugEnabled = false;
   
   private formatMessage(level: string, message: string, options: LogOptions = {}): string {
     const parts: string[] = [];
@@ -44,22 +45,22 @@ class Logger {
   }
 
   debug(message: string, options: LogOptions = {}) {
+    if (!this.debugEnabled) return;
     if (options.clear) process.stdout.write('\x1Bc');
     console.log(this.formatMessage('debug', colors.dim(message), options));
   }
 
-  logServerStart(port: string | number) {
-    console.log();
-    console.log(`  ${colors.bold(colors.cyan('typeflow'))} ${colors.dim('v1.0.0')} dev server running at:`);
-    console.log();
-    console.log(`  ${colors.green('➜')}  ${colors.bold('Local:')}   ${colors.cyan(`http://localhost:${port}/`)}`);
-    console.log(`  ${colors.green('➜')}  ${colors.bold('Network:')} ${colors.dim('use --host to expose')}`);
-    console.log();
+  setDebug(enabled: boolean) {
+    this.debugEnabled = enabled;
   }
 
-  logReady(duration?: number) {
-    const time = duration ? `${duration}ms` : `${Date.now() - this.startTime}ms`;
-    console.log(`  ${colors.green('ready')} in ${colors.bold(time)}.`);
+  logServerStart(port: string | number, duration: number) {
+    const packageJson = require('../../package.json');
+    console.log();
+    console.log(`  ${colors.bold(colors.blue('TYPEFLOW'))} ${colors.blue(`v${packageJson.version}`)}  ${colors.dim('ready in')} ${colors.bold(`${duration}`)} ms`);
+    console.log();
+    console.log(`  ${colors.blue('➜')}  ${colors.bold('Local:')}   ${colors.cyan(`http://localhost:${port}/`)}`);
+    // console.log(`  ${colors.green('➜')}  ${colors.bold('Network:')} ${colors.dim('use --host to expose')}`);
     console.log();
   }
 

@@ -15,6 +15,7 @@ program
   .description('Start development server with live reload')
   .option('-p, --port <port>', 'Port to run on', '3000')
   .option('--reload', 'Enable live reload')
+  .option('--debug', 'Enable debug logging')
   .action(devCommand);
 
 program
