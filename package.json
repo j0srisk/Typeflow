@@ -9,7 +9,10 @@
   "scripts": {
     "build": "tsc",
     "dev": "tsc --watch",
-    "prepublishOnly": "npm run build"
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage",
+    "prepublishOnly": "npm run build && npm test"
   },
   "keywords": [
     "webflow",
@@ -33,9 +36,12 @@
     "ws": "^8.18.3"
   },
   "devDependencies": {
+    "@types/jest": "^30.0.0",
     "@types/ms": "^2.1.0",
     "@types/node": "^24.1.0",
     "@types/ws": "^8.18.1",
+    "jest": "^30.0.5",
+    "ts-jest": "^29.4.0",
     "typescript": "^5.8.3"
   }
 }
