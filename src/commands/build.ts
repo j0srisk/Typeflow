@@ -3,7 +3,6 @@ import * as path from 'path';
 import * as fs from 'fs';
 import { logger } from '../utils/logger';
 import { cleanDirectory, ensureDirectory } from '../utils/fs-utils';
-import { scanDirectory } from '../utils/file-watcher';
 
 interface BuildOptions {
   minify?: boolean;
@@ -28,17 +27,9 @@ export async function buildCommand(options: BuildOptions) {
   cleanDirectory(outDir);
   ensureDirectory(outDir);
 
-  // Find all entry points using the utility function
-  const entryPoints = scanDirectory(srcDir);
-
-  if (entryPoints.length === 0) {
-    logger.warn('No TypeScript, JavaScript, or CSS files found in src directory.');
-    return;
-  }
-
   try {
     const result = await esbuild.build({
-      entryPoints,
+      entryPoints: [`${srcDir}/**/*.ts`, `${srcDir}/**/*.js`, `${srcDir}/**/*.css`],
       bundle: false,
       outdir: outDir,
       outbase: srcDir,
