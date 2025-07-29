@@ -1,4 +1,3 @@
-// Live reload client
 // @ts-ignore
 if (typeof window !== "undefined") {
   const ws = new WebSocket("ws://localhost:{{PORT}}");

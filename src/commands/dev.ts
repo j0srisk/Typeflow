@@ -70,7 +70,7 @@ export async function devCommand(options: DevOptions) {
             const contents = await fs.promises.readFile(args.path, 'utf8');
             
             // Read live-reload client code
-            const liveReloadPath = path.resolve(__dirname, '../client/live-reload.ts');
+            const liveReloadPath = path.resolve(__dirname, '../../src/client/live-reload.ts');
             let liveReloadCode = await fs.promises.readFile(liveReloadPath, 'utf8');
             // Replace placeholder with actual port
             liveReloadCode = liveReloadCode.replace('{{PORT}}', (port + 1).toString());
