@@ -49,13 +49,13 @@ async function generateIndexFile(outputFiles: FileData): Promise<void> {
     // Read and write main.js with data injection
     let jsPath = path.resolve(__dirname, "../client/main.js");
     if (!fs.existsSync(jsPath)) {
-      jsPath = path.resolve(process.cwd(), "src/client/main.js");
+      jsPath = path.resolve(process.cwd(), "dist/client/main.js");
     }
 
     let jsContent = await fs.promises.readFile(jsPath, "utf8");
     jsContent = jsContent.replace(
-      "{{FILE_DATA}}",
-      JSON.stringify(outputFiles),
+      /const fileData = \{\s*js: \[\],\s*ts: \[\],\s*css: \[\]\s*\};/,
+      `const fileData = ${JSON.stringify(outputFiles)};`
     );
 
     const distJsPath = path.join(distDir, "main.js");

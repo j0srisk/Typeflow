@@ -109,6 +109,18 @@ h2 {
   font-family: monospace;
 }
 
+.syntax-tag {
+  color: #80cbc4;
+}
+
+.syntax-attr {
+  color: #ffcb6b;
+}
+
+.syntax-value {
+  color: #c3e88d;
+}
+
 .section-item-content-button {
   background-color: #202020;
   border: none;

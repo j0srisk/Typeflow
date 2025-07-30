@@ -7,7 +7,8 @@
     "typeflow": "./bin/typeflow.js"
   },
   "scripts": {
-    "build": "tsc && cp -r src/client dist/",
+    "build": "tsc && npm run build:client",
+    "build:client": "esbuild src/client/main.ts --outfile=dist/client/main.js --target=es2020 && cp src/client/index.html src/client/index.css dist/client/",
     "dev": "tsc --watch",
     "test": "jest",
     "test:watch": "jest --watch",
