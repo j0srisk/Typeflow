@@ -1,6 +1,7 @@
 import * as esbuild from "esbuild";
 import * as path from "path";
 import * as fs from "fs";
+import * as zlib from "zlib";
 import { logger } from "../utils/logger";
 import { cleanDirectory, ensureDirectory } from "../utils/fs-utils";
 
@@ -8,6 +9,7 @@ interface BuildOptions {
   minify?: boolean;
   dropConsole?: boolean;
   sourcemap?: boolean;
+  debug?: boolean;
 }
 
 export async function buildCommand(options: BuildOptions) {
@@ -23,7 +25,8 @@ export async function buildCommand(options: BuildOptions) {
     process.exit(1);
   }
 
-  logger.info("building for production...");
+  const packageJson = require("../../package.json");
+  logger.buildStart(packageJson.version);
 
   // Clean output directory
   cleanDirectory(outDir);
@@ -36,6 +39,7 @@ export async function buildCommand(options: BuildOptions) {
         `${srcDir}/**/*.js`,
         `${srcDir}/**/*.css`,
       ],
+      logLevel: options.debug ? "info" : "error", // Show warnings in debug mode
       bundle: true,
       outdir: outDir,
       outbase: srcDir,
@@ -56,8 +60,8 @@ export async function buildCommand(options: BuildOptions) {
 
     const duration = Date.now() - startTime;
 
-    // Calculate file sizes
-    const files: Array<{ name: string; size: string; gzip?: string }> = [];
+    // Calculate file sizes with gzip
+    const files: Array<{ name: string; size: string; gzip: string }> = [];
 
     if (result.metafile) {
       for (const [outputPath, output] of Object.entries(
@@ -67,9 +71,15 @@ export async function buildCommand(options: BuildOptions) {
           const relativePath = path.relative(process.cwd(), outputPath);
           const sizeKB = (output.bytes / 1024).toFixed(2);
 
+          // Calculate gzip size
+          const fileContent = fs.readFileSync(outputPath);
+          const gzipSize = zlib.gzipSync(fileContent).length;
+          const gzipKB = (gzipSize / 1024).toFixed(2);
+
           files.push({
             name: relativePath,
             size: `${sizeKB} kB`,
+            gzip: `${gzipKB} kB`,
           });
         }
       }

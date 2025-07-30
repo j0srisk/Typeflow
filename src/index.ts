@@ -14,7 +14,7 @@ program
 
 program
   .command("dev")
-  .description("Start development server with live reload")
+  .description("Start development server")
   .option("-p, --port <port>", "Port to run on", "3000")
   .option("--reload", "Enable live reload")
   .option("--debug", "Enable debug logging")
@@ -26,6 +26,7 @@ program
   .option("--minify", "Minify output files")
   .option("--drop-console", "Remove console statements")
   .option("--sourcemap", "Generate source maps")
+  .option("--debug", "Enable debug logging")
   .action(buildCommand);
 
 program.parse();

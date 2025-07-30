@@ -80,21 +80,58 @@ class Logger {
     );
   }
 
+  buildStart(version: string) {
+    console.log(
+      `${colors.cyan("typeflow")} ${colors.cyan(`v${version}`)} ${colors.blue("building for production...")}`,
+    );
+  }
+
+  private getFileColor(filename: string): (text: string) => string {
+    const ext = filename.split(".").pop()?.toLowerCase();
+
+    switch (ext) {
+      case "html":
+        return colors.green;
+      case "css":
+        return colors.magenta;
+      case "js":
+      case "ts":
+        return colors.cyan;
+      default:
+        return colors.white;
+    }
+  }
+
   logBuild(
-    files: Array<{ name: string; size: string; gzip?: string }>,
+    files: Array<{ name: string; size: string; gzip: string }>,
     duration: number,
   ) {
-    console.log(
-      `${colors.green("✓")} built in ${colors.bold(`${duration}ms`)}`,
-    );
+    console.log(`${colors.blue("✓")} ${files.length} files transformed.`);
+
+    // Find the longest filename for proper alignment
+    const maxLength = Math.max(...files.map((f) => f.name.length));
 
     files.forEach((file) => {
-      const parts = [colors.dim(file.name), colors.bold(file.size)];
-      if (file.gzip) {
-        parts.push(colors.dim("│"), colors.dim(`gzip: ${file.gzip}`));
-      }
-      console.log(parts.join(" "));
+      const lastSlashIndex = file.name.lastIndexOf("/");
+      const dirPath =
+        lastSlashIndex >= 0 ? file.name.substring(0, lastSlashIndex + 1) : "";
+      const fileName =
+        lastSlashIndex >= 0
+          ? file.name.substring(lastSlashIndex + 1)
+          : file.name;
+
+      const colorFn = this.getFileColor(fileName);
+      const displayName = `${colors.dim(dirPath)}${colorFn(fileName)}`;
+
+      // Add 2 spaces after the longest filename
+      const paddingLength = maxLength - file.name.length + 2;
+      const padding = " ".repeat(paddingLength);
+
+      console.log(
+        `${displayName}${padding}${colors.bold(colors.dim(file.size.padEnd(8)))} ${colors.dim("│")} ${colors.dim(`gzip: ${file.gzip}`)}`,
+      );
     });
+    console.log(`${colors.blue("✓ built in")} ${colors.blue(`${duration}ms`)}`);
   }
 }
 
