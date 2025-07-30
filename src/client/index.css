@@ -95,9 +95,16 @@ h2 {
   line-height: 16px;
   display: flex;
   align-items: center;
-  justify-content: space-between;
   margin-bottom: 8px;
   padding: 2px;
+  text-decoration: none;
+  color: inherit;
+  width: fit-content;
+}
+
+.section-item-name:hover {
+  text-decoration: underline;
+  text-decoration-color: rgba(255, 255, 255, 0.67);
 }
 
 .section-item-content {

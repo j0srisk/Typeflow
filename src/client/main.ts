@@ -42,9 +42,30 @@ function populateFileList(elementId: string, files: FileInfo[]): void {
     const li = document.createElement("li");
     li.className = "section-item";
 
-    const name = document.createElement("p");
+    const name = document.createElement("a");
     name.className = "section-item-name";
-    name.textContent = file.name;
+    name.href = file.url;
+    name.target = "_blank";
+    
+    // Split the file path to style directory and filename differently
+    const lastSlashIndex = file.name.lastIndexOf('/');
+    if (lastSlashIndex !== -1) {
+      const directory = file.name.substring(0, lastSlashIndex + 1);
+      const filename = file.name.substring(lastSlashIndex + 1);
+      
+      const directorySpan = document.createElement("span");
+      directorySpan.style.color = "rgba(255, 255, 255, 0.67)";
+      directorySpan.textContent = directory;
+      
+      const filenameSpan = document.createElement("span");
+      filenameSpan.textContent = filename;
+      
+      name.appendChild(directorySpan);
+      name.appendChild(filenameSpan);
+    } else {
+      // No directory, just the filename
+      name.textContent = file.name;
+    }
 
     const content = document.createElement("div");
     content.className = "section-item-content";
