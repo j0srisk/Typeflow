@@ -78,7 +78,7 @@ export async function devCommand(options: DevOptions) {
     write: true,
     metafile: true,
     plugins: [
-      createIndexServerPlugin(`http://localhost:${port}`),
+      createIndexServerPlugin(`http://localhost:${port}`, options.reload, port + 1),
       ...(options.reload
         ? [
           {

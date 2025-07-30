@@ -13,7 +13,7 @@ interface FileData {
   css: FileInfo[];
 }
 
-export function createIndexServerPlugin(serverUrl?: string): Plugin {
+export function createIndexServerPlugin(serverUrl?: string, reloadEnabled?: boolean, reloadPort?: number): Plugin {
   return {
     name: "index-server",
     setup(build: PluginBuild) {
@@ -26,13 +26,13 @@ export function createIndexServerPlugin(serverUrl?: string): Plugin {
         }
 
         // Generate and write index.html to dist directory
-        await generateIndexFile(outputFiles);
+        await generateIndexFile(outputFiles, reloadEnabled, reloadPort);
       });
     },
   };
 }
 
-async function generateIndexFile(outputFiles: FileData): Promise<void> {
+async function generateIndexFile(outputFiles: FileData, reloadEnabled?: boolean, reloadPort?: number): Promise<void> {
   try {
     const distDir = path.resolve(process.cwd(), "dist");
 
@@ -42,7 +42,20 @@ async function generateIndexFile(outputFiles: FileData): Promise<void> {
       htmlPath = path.resolve(process.cwd(), "src/client/index.html");
     }
 
-    const htmlContent = await fs.promises.readFile(htmlPath, "utf8");
+    let htmlContent = await fs.promises.readFile(htmlPath, "utf8");
+    
+    // Add live reload script if enabled
+    if (reloadEnabled && reloadPort) {
+      const liveReloadScript = `
+    <script>
+      if (typeof window !== "undefined") {
+        const ws = new WebSocket("ws://localhost:${reloadPort}");
+        ws.onmessage = () => window.location.reload();
+      }
+    </script>`;
+      htmlContent = htmlContent.replace('</body>', `${liveReloadScript}\n  </body>`);
+    }
+    
     const indexPath = path.join(distDir, "index.html");
     await fs.promises.writeFile(indexPath, htmlContent, "utf8");
 

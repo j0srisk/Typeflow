@@ -23,18 +23,20 @@ function populateFileList(elementId: string, files: FileInfo[]): void {
   list.innerHTML = "";
 
   // Find the corresponding note element
-  const noteElement = list.parentElement?.querySelector('.note');
-  
+  const noteElement = list.parentElement?.querySelector(
+    ".note",
+  ) as HTMLDivElement;
+
   if (files.length === 0) {
     // Show the note element if no files
     if (noteElement) {
-      noteElement.style.display = 'flex';
+      noteElement.style.display = "flex";
     }
     return;
   } else {
     // Hide the note element if there are files
     if (noteElement) {
-      noteElement.style.display = 'none';
+      noteElement.style.display = "none";
     }
   }
 
@@ -46,20 +48,20 @@ function populateFileList(elementId: string, files: FileInfo[]): void {
     name.className = "section-item-name";
     name.href = file.url;
     name.target = "_blank";
-    
+
     // Split the file path to style directory and filename differently
-    const lastSlashIndex = file.name.lastIndexOf('/');
+    const lastSlashIndex = file.name.lastIndexOf("/");
     if (lastSlashIndex !== -1) {
       const directory = file.name.substring(0, lastSlashIndex + 1);
       const filename = file.name.substring(lastSlashIndex + 1);
-      
+
       const directorySpan = document.createElement("span");
       directorySpan.style.color = "rgba(255, 255, 255, 0.67)";
       directorySpan.textContent = directory;
-      
+
       const filenameSpan = document.createElement("span");
       filenameSpan.textContent = filename;
-      
+
       name.appendChild(directorySpan);
       name.appendChild(filenameSpan);
     } else {
