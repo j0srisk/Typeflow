@@ -22,12 +22,20 @@ function populateFileList(elementId: string, files: FileInfo[]): void {
 
   list.innerHTML = "";
 
+  // Find the corresponding note element
+  const noteElement = list.parentElement?.querySelector('.note');
+  
   if (files.length === 0) {
-    const li = document.createElement("li");
-    li.className = "section-item";
-    li.innerHTML = '<p class="section-item-name">No files found</p>';
-    list.appendChild(li);
+    // Show the note element if no files
+    if (noteElement) {
+      noteElement.style.display = 'flex';
+    }
     return;
+  } else {
+    // Hide the note element if there are files
+    if (noteElement) {
+      noteElement.style.display = 'none';
+    }
   }
 
   files.forEach(function (file: FileInfo) {
