@@ -7,7 +7,7 @@
     "typeflow": "./bin/typeflow.js"
   },
   "scripts": {
-    "build": "tsc",
+    "build": "tsc && cp -r src/client dist/",
     "dev": "tsc --watch",
     "test": "jest",
     "test:watch": "jest --watch",

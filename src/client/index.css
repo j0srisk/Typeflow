@@ -1,0 +1,123 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family:
+    -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu,
+    Cantarell, sans-serif;
+  line-height: 1.6;
+  color: white;
+  min-height: 100vh;
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background-color: #404040;
+}
+
+.container {
+  width: 100%;
+  max-width: 768px;
+  margin: 0 auto;
+}
+
+.card {
+  background-color: rgb(41, 41, 41);
+  border-radius: 8px;
+  height: 100%;
+  box-shadow:
+    0 1px 3px -1px rgba(0, 0, 0, 0.34),
+    0 5px 10px -2px rgba(0, 0, 0, 0.32);
+}
+
+nav {
+  height: 40px;
+  padding: 0 10px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 16px;
+}
+
+h1,
+h2 {
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1;
+}
+
+.section {
+  border-top: 1px solid rgba(255, 255, 255, 0.13);
+  padding: 8px;
+}
+
+.section-title {
+  padding: 7px 8px;
+}
+
+.section-content {
+  padding: 8px;
+}
+
+.section-description {
+  font-size: 11.5px;
+  letter-spacing: -0.115px;
+  line-height: 16px;
+  color: rgba(255, 255, 255, 0.67);
+}
+
+.section-list {
+  margin-top: 16px;
+}
+
+.section-item {
+  margin-top: 16px;
+  list-style: none;
+}
+
+.section-item-name {
+  height: 20px;
+  font-size: 11.5px;
+  letter-spacing: -0.115px;
+  line-height: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+  padding: 2px;
+}
+
+.section-item-content {
+  border-radius: 4px;
+  background-color: #202020;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  display: flex;
+  justify-content: space-between;
+  overflow: hidden;
+  position: relative;
+}
+
+.section-item-content-text {
+  padding: 9px;
+  font-size: 11.5px;
+  line-height: 14px;
+  white-space: nowrap;
+}
+
+.section-item-content-button {
+  background-color: #202020;
+  border: none;
+  color: white;
+  padding: 0px 12px;
+  font-size: 11.5px;
+  line-height: 14px;
+  cursor: pointer;
+  position: absolute;
+  right: 0;
+  top: 0;
+  height: 100%;
+}

@@ -4,6 +4,8 @@ import * as fs from "fs";
 import { WebSocketServer } from "ws";
 import { logger } from "../utils/logger";
 import { cleanDirectory, ensureDirectory } from "../utils/fs-utils";
+import { createIndexServerPlugin } from "../plugins/index-server";
+import { PluginBuild, OnLoadArgs } from "esbuild";
 
 interface DevOptions {
   port: string;
@@ -74,12 +76,15 @@ export async function devCommand(options: DevOptions) {
     },
     sourcemap: true,
     write: true,
-    plugins: options.reload
-      ? [
+    metafile: true,
+    plugins: [
+      createIndexServerPlugin(`http://localhost:${port}`),
+      ...(options.reload
+        ? [
           {
             name: "live-reload-inject",
-            setup(build) {
-              build.onLoad({ filter: /\.(ts|js)$/ }, async (args) => {
+            setup(build: PluginBuild) {
+              build.onLoad({ filter: /\.(ts|js)$/ }, async (args: OnLoadArgs) => {
                 const contents = await fs.promises.readFile(args.path, "utf8");
 
                 // Read live-reload client code
@@ -107,24 +112,25 @@ export async function devCommand(options: DevOptions) {
           },
           {
             name: "watch-plugin",
-            setup(build) {
-              build.onEnd((result) => {
-                if (result.errors.length === 0) {
+            setup(build: PluginBuild) {
+              build.onEnd((result: any) => {
+                if (result.errors && result.errors.length === 0) {
                   logger.debug("Build completed successfully");
                   notifyClients();
-                } else {
+                } else if (result.errors && result.errors.length > 0) {
                   logger.error(
                     `Build failed with ${result.errors.length} errors`,
                   );
-                  result.errors.forEach((error) => {
+                  result.errors.forEach((error: any) => {
                     console.error(error.text);
                   });
                 }
               });
             },
           },
-        ]
-      : [],
+          ]
+        : []),
+    ],
   });
 
   // Start watch mode - esbuild will automatically watch for file changes, additions, deletions
