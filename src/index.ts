@@ -4,20 +4,28 @@ import { devCommand } from "./commands/dev";
 import { buildCommand } from "./commands/build";
 
 const program = new Command();
+const packageJson = require("../package.json");
 
 program
   .name("typeflow")
   .description(
     "Local development server for TypeScript/JavaScript and CSS files in Webflow projects",
   )
-  .version("1.0.0");
+  .version(packageJson.version, "-v, --version", "output the version number");
+
+program
+  .description("Start development server")
+  .option("-p, --port <port>", "Port to run on", "3000")
+  .option("-r, --reload", "Enable live reload")
+  .option("-d, --debug", "Enable debug logging")
+  .action(devCommand);
 
 program
   .command("dev")
   .description("Start development server")
   .option("-p, --port <port>", "Port to run on", "3000")
-  .option("--reload", "Enable live reload")
-  .option("--debug", "Enable debug logging")
+  .option("-r,--reload", "Enable live reload")
+  .option("-d, --debug", "Enable debug logging")
   .action(devCommand);
 
 program
