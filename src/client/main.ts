@@ -13,13 +13,13 @@ interface FileData {
 const fileData: FileData = {
   js: [],
   ts: [],
-  css: []
+  css: [],
 };
 
 function populateFileList(elementId: string, files: FileInfo[]): void {
   const list = document.getElementById(elementId);
   if (!list) return;
-  
+
   list.innerHTML = "";
 
   if (files.length === 0) {
@@ -47,24 +47,28 @@ function populateFileList(elementId: string, files: FileInfo[]): void {
     // Format the content based on file type
     let formattedContent;
     let displayHTML;
-    
+
     if (elementId === "js-files") {
-      formattedContent = '<script defer src="' + file.url + '"></' + 'script>';
-      displayHTML = '<span class="syntax-tag">&lt;script</span> ' +
-                    '<span class="syntax-attr">defer</span> ' +
-                    '<span class="syntax-attr">src</span>=' +
-                    '<span class="syntax-value">"' + file.url + '"</span>' +
-                    '<span class="syntax-tag">&gt;&lt;/script&gt;</span>';
-      
+      formattedContent = '<script defer src="' + file.url + '"></' + "script>";
+      displayHTML =
+        '<span class="syntax-tag">&lt;script</span> ' +
+        '<span class="syntax-attr">defer</span> ' +
+        '<span class="syntax-attr">src</span>=' +
+        '<span class="syntax-value">"' +
+        file.url +
+        '"</span>' +
+        '<span class="syntax-tag">&gt;&lt;/script&gt;</span>';
     } else if (elementId === "css-files") {
       formattedContent = '<link rel="stylesheet" href="' + file.url + '">';
-      displayHTML = '<span class="syntax-tag">&lt;link</span> ' +
-                    '<span class="syntax-attr">rel</span>=' +
-                    '<span class="syntax-value">"stylesheet"</span> ' +
-                    '<span class="syntax-attr">href</span>=' +
-                    '<span class="syntax-value">"' + file.url + '"</span>' +
-                    '<span class="syntax-tag">&gt;</span>';
-      
+      displayHTML =
+        '<span class="syntax-tag">&lt;link</span> ' +
+        '<span class="syntax-attr">rel</span>=' +
+        '<span class="syntax-value">"stylesheet"</span> ' +
+        '<span class="syntax-attr">href</span>=' +
+        '<span class="syntax-value">"' +
+        file.url +
+        '"</span>' +
+        '<span class="syntax-tag">&gt;</span>';
     } else {
       formattedContent = file.url;
       displayHTML = file.url;
@@ -74,12 +78,16 @@ function populateFileList(elementId: string, files: FileInfo[]): void {
 
     const button = document.createElement("button");
     button.className = "section-item-content-button";
-    button.textContent = "Copy";
+
+    const copyIcon =
+      '<svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M6 3C6 2.44772 6.44772 2 7 2H13C13.5523 2 14 2.44772 14 3V9C14 9.55228 13.5523 10 13 10H7C6.44772 10 6 9.55228 6 9V3ZM7 3H13V9H7V3Z" fill="currentColor"></path><path d="M3 5V12C3 12.5523 3.44772 13 4 13H11V12H4V5H3Z" fill="currentColor"></path></svg>';
+
+    button.innerHTML = copyIcon;
     button.onclick = function (): void {
       navigator.clipboard.writeText(formattedContent).then(function (): void {
         button.textContent = "Copied!";
         setTimeout(function (): void {
-          button.textContent = "Copy";
+          button.innerHTML = copyIcon;
         }, 2000);
       });
     };
