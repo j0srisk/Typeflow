@@ -34,24 +34,32 @@ export function createIndexServerPlugin(serverUrl?: string): Plugin {
 
 async function generateIndexFile(outputFiles: FileData): Promise<void> {
   try {
-    // Read the HTML template - try CLI dist first, then source
+    const distDir = path.resolve(process.cwd(), "dist");
+
+    // Read and write HTML template
     let htmlPath = path.resolve(__dirname, "../client/index.html");
     if (!fs.existsSync(htmlPath)) {
       htmlPath = path.resolve(process.cwd(), "src/client/index.html");
     }
 
-    let htmlContent = await fs.promises.readFile(htmlPath, "utf8");
+    const htmlContent = await fs.promises.readFile(htmlPath, "utf8");
+    const indexPath = path.join(distDir, "index.html");
+    await fs.promises.writeFile(indexPath, htmlContent, "utf8");
 
-    // Replace the placeholder with actual file data
-    htmlContent = htmlContent.replace(
+    // Read and write main.js with data injection
+    let jsPath = path.resolve(__dirname, "../client/main.js");
+    if (!fs.existsSync(jsPath)) {
+      jsPath = path.resolve(process.cwd(), "src/client/main.js");
+    }
+
+    let jsContent = await fs.promises.readFile(jsPath, "utf8");
+    jsContent = jsContent.replace(
       "{{FILE_DATA}}",
       JSON.stringify(outputFiles),
     );
 
-    // Write index.html to user's dist directory
-    const distDir = path.resolve(process.cwd(), "dist");
-    const indexPath = path.join(distDir, "index.html");
-    await fs.promises.writeFile(indexPath, htmlContent, "utf8");
+    const distJsPath = path.join(distDir, "main.js");
+    await fs.promises.writeFile(distJsPath, jsContent, "utf8");
 
     // Copy CSS file to user's dist directory
     let cssPath = path.resolve(__dirname, "../client/index.css");
