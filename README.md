@@ -1,3 +1,5 @@
+![NPM Version](https://img.shields.io/npm/v/@j0srisk/typeflow)
+
 # TypeFlow
 
 A local development server for working with TypeScript/JavaScript and CSS files in Webflow projects. Inspired by and intended to replace [Finsweet's Developer Starter](https://github.com/finsweet/developer-starter) with a more streamlined approach.
