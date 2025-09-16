@@ -95,16 +95,14 @@ npx typeflow --reload
 
 #### Development Options
 
-- `-p, --port <port>` - Port to run on (default: 3000)
 - `-r, --reload` - Enable live reload
-- `-d, --debug` - Enable debug logging
 
 ### Production Build
 
 Build your files for production:
 
 ```bash
-npx typeflow build --minify --drop-console --sourcemap
+npx typeflow build --minify --drop-console --drop-debugger
 ```
 
 #### Build Options
@@ -112,8 +110,6 @@ npx typeflow build --minify --drop-console --sourcemap
 - `--minify` - Minify output files
 - `--drop-console` - Remove console statements
 - `--drop-debugger` - Remove debugger statements
-- `--sourcemap` - Generate source maps
-- `--debug` - Enable debug logging
 
 ## Configuration
 
