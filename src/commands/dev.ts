@@ -78,56 +78,66 @@ export async function devCommand(options: DevOptions) {
     write: true,
     metafile: true,
     plugins: [
-      createIndexServerPlugin(`http://localhost:${port}`, options.reload, port + 1),
+      createIndexServerPlugin(
+        `http://localhost:${port}`,
+        options.reload,
+        port + 1,
+      ),
       ...(options.reload
         ? [
-          {
-            name: "live-reload-inject",
-            setup(build: PluginBuild) {
-              build.onLoad({ filter: /\.(ts|js)$/ }, async (args: OnLoadArgs) => {
-                const contents = await fs.promises.readFile(args.path, "utf8");
+            {
+              name: "live-reload-inject",
+              setup(build: PluginBuild) {
+                build.onLoad(
+                  { filter: /\.(ts|js)$/ },
+                  async (args: OnLoadArgs) => {
+                    const contents = await fs.promises.readFile(
+                      args.path,
+                      "utf8",
+                    );
 
-                // Read live-reload client code
-                const liveReloadPath = path.resolve(
-                  __dirname,
-                  "../../src/client/live-reload.ts",
-                );
-                let liveReloadCode = await fs.promises.readFile(
-                  liveReloadPath,
-                  "utf8",
-                );
-                // Replace placeholder with actual port
-                liveReloadCode = liveReloadCode.replace(
-                  "{{PORT}}",
-                  (port + 1).toString(),
-                );
+                    // Read live-reload client code
+                    const liveReloadPath = path.resolve(
+                      __dirname,
+                      "../../src/client/live-reload.ts",
+                    );
+                    let liveReloadCode = await fs.promises.readFile(
+                      liveReloadPath,
+                      "utf8",
+                    );
+                    // Replace placeholder with actual port
+                    liveReloadCode = liveReloadCode.replace(
+                      "{{PORT}}",
+                      (port + 1).toString(),
+                    );
 
-                const injectedCode = `${liveReloadCode}\n${contents}`;
-                return {
-                  contents: injectedCode,
-                  loader: "ts",
-                };
-              });
+                    const injectedCode = `${liveReloadCode}\n${contents}`;
+                    return {
+                      contents: injectedCode,
+                      loader: "ts",
+                    };
+                  },
+                );
+              },
             },
-          },
-          {
-            name: "watch-plugin",
-            setup(build: PluginBuild) {
-              build.onEnd((result: any) => {
-                if (result.errors && result.errors.length === 0) {
-                  logger.debug("Build completed successfully");
-                  notifyClients();
-                } else if (result.errors && result.errors.length > 0) {
-                  logger.error(
-                    `Build failed with ${result.errors.length} errors`,
-                  );
-                  result.errors.forEach((error: any) => {
-                    console.error(error.text);
-                  });
-                }
-              });
+            {
+              name: "watch-plugin",
+              setup(build: PluginBuild) {
+                build.onEnd((result: any) => {
+                  if (result.errors && result.errors.length === 0) {
+                    logger.debug("Build completed successfully");
+                    notifyClients();
+                  } else if (result.errors && result.errors.length > 0) {
+                    logger.error(
+                      `Build failed with ${result.errors.length} errors`,
+                    );
+                    result.errors.forEach((error: any) => {
+                      console.error(error.text);
+                    });
+                  }
+                });
+              },
             },
-          },
           ]
         : []),
     ],

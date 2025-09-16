@@ -14,6 +14,7 @@ A local development server for working with TypeScript/JavaScript and CSS files 
 ### 1. Set up your project
 
 **Option A: Use the starter template**
+
 ```bash
 git clone https://github.com/j0srisk/typeflow-starter.git your-project
 cd your-project
@@ -23,6 +24,7 @@ npm install
 **Option B: Create your own project structure**
 
 Install TypeFlow in your project:
+
 ```bash
 npm install typeflow
 ```
@@ -74,6 +76,7 @@ typeflow build --minify --drop-console --drop-debugger
 ### 7. Deploy production files
 
 Replace the localhost tags in your Webflow site with either:
+
 - Copy and paste the built code directly into custom code
 - Host the production files elsewhere (jsdelivr, CDN, etc.) and update the URLs
 
