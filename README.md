@@ -2,6 +2,8 @@
 
 A local development server for working with TypeScript/JavaScript and CSS files in Webflow projects. Inspired by and intended to replace [Finsweet's Developer Starter](https://github.com/finsweet/developer-starter) with a more streamlined approach.
 
+![TypeFlow Development Server](assets/screenshot.png)
+
 ## Features
 
 - **Local Development Server** - Serve TypeScript/JavaScript and CSS files locally during Webflow development
