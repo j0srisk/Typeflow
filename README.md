@@ -34,14 +34,15 @@ Create your project structure (this is just an example - organize files however 
 ```
 your-project/
 ├── src/
-│   ├── pages/
-│   │   └── home/
-│   │       ├── main.ts
-│   │       └── styles.css
 │   ├── components/
 │   │   └── slider/
 │   │       ├── main.ts
 │   │       └── styles.css
+│   ├── pages/
+│   │   └── home/
+│   │       ├── main.ts
+│   │       └── styles.css
+│   ├── main.ts
 │   └── global.css
 ```
 
