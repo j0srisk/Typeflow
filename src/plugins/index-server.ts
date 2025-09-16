@@ -13,7 +13,11 @@ interface FileData {
   css: FileInfo[];
 }
 
-export function createIndexServerPlugin(serverUrl?: string, reloadEnabled?: boolean, reloadPort?: number): Plugin {
+export function createIndexServerPlugin(
+  serverUrl?: string,
+  reloadEnabled?: boolean,
+  reloadPort?: number,
+): Plugin {
   return {
     name: "index-server",
     setup(build: PluginBuild) {
@@ -32,7 +36,11 @@ export function createIndexServerPlugin(serverUrl?: string, reloadEnabled?: bool
   };
 }
 
-async function generateIndexFile(outputFiles: FileData, reloadEnabled?: boolean, reloadPort?: number): Promise<void> {
+async function generateIndexFile(
+  outputFiles: FileData,
+  reloadEnabled?: boolean,
+  reloadPort?: number,
+): Promise<void> {
   try {
     const distDir = path.resolve(process.cwd(), "dist");
 
@@ -43,7 +51,7 @@ async function generateIndexFile(outputFiles: FileData, reloadEnabled?: boolean,
     }
 
     let htmlContent = await fs.promises.readFile(htmlPath, "utf8");
-    
+
     // Add live reload script if enabled
     if (reloadEnabled && reloadPort) {
       const liveReloadScript = `
@@ -53,35 +61,38 @@ async function generateIndexFile(outputFiles: FileData, reloadEnabled?: boolean,
         ws.onmessage = () => window.location.reload();
       }
     </script>`;
-      htmlContent = htmlContent.replace('</body>', `${liveReloadScript}\n  </body>`);
+      htmlContent = htmlContent.replace(
+        "</body>",
+        `${liveReloadScript}\n  </body>`,
+      );
     }
-    
+
     const indexPath = path.join(distDir, "index.html");
     await fs.promises.writeFile(indexPath, htmlContent, "utf8");
 
-    // Read and write main.js with data injection
-    let jsPath = path.resolve(__dirname, "../client/main.js");
+    // Read and write typeflow-d8c3f1a6.js with data injection
+    let jsPath = path.resolve(__dirname, "../client/typeflow-d8c3f1a6.js");
     if (!fs.existsSync(jsPath)) {
-      jsPath = path.resolve(process.cwd(), "dist/client/main.js");
+      jsPath = path.resolve(process.cwd(), "dist/client/typeflow-d8c3f1a6.js");
     }
 
     let jsContent = await fs.promises.readFile(jsPath, "utf8");
     jsContent = jsContent.replace(
       /const fileData = \{\s*js: \[\],\s*ts: \[\],\s*css: \[\]\s*\};/,
-      `const fileData = ${JSON.stringify(outputFiles)};`
+      `const fileData = ${JSON.stringify(outputFiles)};`,
     );
 
-    const distJsPath = path.join(distDir, "main.js");
+    const distJsPath = path.join(distDir, "typeflow-d8c3f1a6.js");
     await fs.promises.writeFile(distJsPath, jsContent, "utf8");
 
     // Copy CSS file to user's dist directory
-    let cssPath = path.resolve(__dirname, "../client/index.css");
+    let cssPath = path.resolve(__dirname, "../client/typeflow-a7b4e9f2.css");
     if (!fs.existsSync(cssPath)) {
-      cssPath = path.resolve(process.cwd(), "src/client/index.css");
+      cssPath = path.resolve(process.cwd(), "src/client/typeflow-a7b4e9f2.css");
     }
 
     const cssContent = await fs.promises.readFile(cssPath, "utf8");
-    const distCssPath = path.join(distDir, "index.css");
+    const distCssPath = path.join(distDir, "typeflow-a7b4e9f2.css");
     await fs.promises.writeFile(distCssPath, cssContent, "utf8");
   } catch (error) {
     console.error("Error generating index file:", error);
