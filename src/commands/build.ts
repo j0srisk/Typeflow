@@ -1,102 +1,106 @@
-import chalk from "chalk";
-import { logBuildOutput } from "../output.js";
-import { Config } from "../config.js";
-import fs from "fs";
-import path from "path";
-import esbuild, { type Metafile } from "esbuild";
-import { getEntryPoints } from "../utils/build.js";
+import * as esbuild from "esbuild";
+import * as path from "path";
+import * as fs from "fs";
+import * as zlib from "zlib";
+import { logger } from "../utils/logger";
+import { cleanDirectory, ensureDirectory } from "../utils/fs-utils";
 
-export async function runBuild(config: Config) {
-  console.log();
-  console.log(
-    chalk.cyan("typeflow") +
-      chalk.rgb(21, 110, 245)(" building for production..."),
-  );
-  const start = Date.now();
-  await buildAll(
-    config.distDir,
-    config.srcDir,
-    true,
-    config.dropConsole,
-    config.dropDebugger,
-    config.minify,
-  );
-  logBuildOutput(config.distDir, start);
+interface BuildOptions {
+  minify?: boolean;
+  dropConsole?: boolean;
+  dropDebugger?: boolean;
+  sourcemap?: boolean;
+  debug?: boolean;
 }
 
-export function removeDir(dir: string) {
-  if (fs.existsSync(dir)) {
-    fs.rmSync(dir, { recursive: true, force: true });
+export async function buildCommand(options: BuildOptions) {
+  const startTime = Date.now();
+  const srcDir = path.resolve(process.cwd(), "src");
+  const outDir = path.resolve(process.cwd(), "dist");
+
+  // Check if src directory exists
+  if (!fs.existsSync(srcDir)) {
+    logger.error(
+      "src directory not found. Please create a src folder with your TypeScript/CSS files.",
+    );
+    process.exit(1);
   }
-}
 
-export function ensureDir(dir: string) {
-  if (!fs.existsSync(dir)) {
-    fs.mkdirSync(dir, { recursive: true });
-  }
-}
+  const packageJson = require("../../package.json");
+  logger.buildStart(packageJson.version);
 
-export async function buildEntry(
-  entry: string,
-  outDir: string,
-  srcDir: string,
-  prod: boolean = false,
-  dropConsole: boolean = false,
-  dropDebugger: boolean = false,
-  minify: boolean = false,
-): Promise<Metafile | undefined> {
-  const relPath = path.relative(srcDir, entry);
-  if (entry.endsWith(".css")) {
-    // Copy CSS file directly
-    const cssOut = path.join(outDir, relPath);
-    const cssOutDir = path.dirname(cssOut);
-    if (!fs.existsSync(cssOutDir)) {
-      fs.mkdirSync(cssOutDir, { recursive: true });
+  // Clean output directory
+  cleanDirectory(outDir);
+  ensureDirectory(outDir);
+
+  try {
+    const result = await esbuild.build({
+      entryPoints: [
+        `${srcDir}/**/*.ts`,
+        `${srcDir}/**/*.js`,
+        `${srcDir}/**/*.css`,
+      ],
+      logLevel: options.debug ? "info" : "error", // Show warnings in debug mode
+      bundle: true,
+      outdir: outDir,
+      outbase: srcDir,
+      format: "iife",
+      target: "es2020",
+      loader: {
+        ".ts": "ts",
+        ".js": "js",
+        ".css": "css",
+      },
+      minify: options.minify || false,
+      drop: [
+        ...(options.dropConsole ? ["console"] : []),
+        ...(options.dropDebugger ? ["debugger"] : []),
+      ] as ("console" | "debugger")[],
+      sourcemap: options.sourcemap || false,
+      write: true,
+      metafile: true,
+      treeShaking: true,
+    });
+
+    const duration = Date.now() - startTime;
+
+    // Calculate file sizes with gzip
+    const files: Array<{ name: string; size: string; gzip: string }> = [];
+
+    if (result.metafile) {
+      for (const [outputPath, output] of Object.entries(
+        result.metafile.outputs,
+      )) {
+        if (!outputPath.endsWith(".map")) {
+          const relativePath = path.relative(process.cwd(), outputPath);
+          const sizeKB = (output.bytes / 1024).toFixed(2);
+
+          // Calculate gzip size
+          const fileContent = fs.readFileSync(outputPath);
+          const gzipSize = zlib.gzipSync(fileContent).length;
+          const gzipKB = (gzipSize / 1024).toFixed(2);
+
+          files.push({
+            name: relativePath,
+            size: `${sizeKB} kB`,
+            gzip: `${gzipKB} kB`,
+          });
+        }
+      }
     }
-    fs.copyFileSync(entry, cssOut);
-    return undefined;
-  }
-  const jsOut = path.join(outDir, relPath.replace(/\.(ts|js)$/, ".js"));
-  const jsOutDir = path.dirname(jsOut);
-  if (!fs.existsSync(jsOutDir)) {
-    fs.mkdirSync(jsOutDir, { recursive: true });
-  }
-  const result = await esbuild.build({
-    entryPoints: [entry],
-    bundle: true,
-    outfile: jsOut,
-    format: "iife",
-    minify: minify,
-    sourcemap: !prod,
-    metafile: true,
-    logLevel: "silent",
-    treeShaking: true,
-    drop:
-      dropConsole || dropDebugger
-        ? ([
-            ...(dropConsole ? ["console"] : []),
-            ...(dropDebugger ? ["debugger"] : []),
-          ] as import("esbuild").Drop[])
-        : undefined,
-  });
-  // esbuild returns a "metafile" property when metafile: true
-  return result.metafile;
-}
 
-export async function buildAll(
-  outDir: string,
-  srcDir: string,
-  prod: boolean = false,
-  dropConsole: boolean = false,
-  dropDebugger: boolean = false,
-  minify: boolean = false,
-) {
-  removeDir(outDir);
-  ensureDir(outDir);
-  const entries = getEntryPoints(srcDir);
-  await Promise.all(
-    entries.map((e) =>
-      buildEntry(e, outDir, srcDir, prod, dropConsole, dropDebugger, minify),
-    ),
-  );
+    logger.logBuild(files, duration);
+  } catch (error) {
+    logger.error(`Build failed:`);
+
+    if (error instanceof Error) {
+      // Format esbuild errors nicely
+      const errorText = error.message;
+      console.error(errorText);
+    } else {
+      console.error(error);
+    }
+
+    process.exit(1);
+  }
 }

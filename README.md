@@ -1,51 +1,129 @@
-# Flow Webflow Devtool
+# TypeFlow
 
-A lightweight local dev tool for modular TypeScript + CSS workflows with Webflow.
+A local development server for working with TypeScript/JavaScript and CSS files in Webflow projects. Inspired by and intended to replace [Finsweet's Developer Starter](https://github.com/finsweet/developer-starter) with a more streamlined approach.
 
 ## Features
 
-- Bundles each `.ts` file in `src/` to `dist/{name}.js` with esbuild
-- Extracts imported CSS into `dist/{name}.css`
-- Watches for changes and rebuilds only changed files
-- Serves `dist/` on http://localhost:3000 for easy linking in Webflow
+- **Local Development Server** - Serve TypeScript/JavaScript and CSS files locally during Webflow development
+- **Live Reload** - Automatic browser refresh when files change
+- **TypeScript Compilation** - Fast compilation using esbuild
+- **Production Build** - Optimized builds with optional minification and source maps
 
-## Usage
+## Quick Start
 
-1. Place your `.ts` (and imported `.css`) files in `src/`.
-2. Run `npm install` to install dependencies.
-3. Start the tool:
+### 1. Set up your project
 
+**Option A: Use the starter template**
 ```bash
-npm run dev
+git clone https://github.com/j0srisk/typeflow-starter.git your-project
+cd your-project
+npm install
 ```
 
-4. Link the output JS/CSS in your Webflow project via `<script>` and `<link>` tags from `dist/`.
+**Option B: Create your own project structure**
 
-## Scripts
+Install TypeFlow in your project:
+```bash
+npm install typeflow
+```
 
-- `npm run dev` — Start watch mode + local server
-- `npm run build` — Build once
-- `npm start` — Run the compiled server (after build)
+Create your project structure (this is just an example - organize files however works best for your project):
 
----
+```
+your-project/
+├── src/
+│   ├── pages/
+│   │   └── home/
+│   │       ├── main.ts
+│   │       └── styles.css
+│   ├── components/
+│   │   └── slider/
+│   │       ├── main.ts
+│   │       └── styles.css
+│   └── global.css
+```
+
+### 3. Start development server
+
+```bash
+typeflow dev --reload
+```
+
+### 3. Copy script and style tags
+
+Visit `http://localhost:3000` in your browser to see the development server page. Copy the HTML script and style tags provided.
+
+### 4. Paste into Webflow
+
+Paste the copied tags into your Webflow site's custom code section or code embed elements and publish.
+
+### 5. Develop with live reload
+
+- Make changes to your TypeScript/CSS files
+- See changes instantly on your Webflow site without republishing
+- JavaScript changes automatically reload the page.
+
+### 6. Build for production
+
+When finished developing:
+
+```bash
+typeflow build --minify --drop-console --drop-debugger
+```
+
+### 7. Deploy production files
+
+Replace the localhost tags in your Webflow site with either:
+- Copy and paste the built code directly into custom code
+- Host the production files elsewhere (jsdelivr, CDN, etc.) and update the URLs
+
+## Commands
+
+### Development Server
+
+Start the development server with live reload:
+
+```bash
+npx typeflow dev --reload
+```
+
+Or using the shorthand:
+
+```bash
+npx typeflow --reload
+```
+
+#### Development Options
+
+- `-r, --reload` - Enable live reload
+
+### Production Build
+
+Build your files for production:
+
+```bash
+npx typeflow build --minify --drop-console --drop-debugger
+```
+
+#### Build Options
+
+- `--minify` - Minify output files
+- `--drop-console` - Remove console statements
+- `--drop-debugger` - Remove debugger statements
+
+## Configuration
+
+TypeFlow works out of the box with sensible defaults. The server will automatically detect and compile TypeScript files using esbuild.
 
 ## Requirements
 
-- Node.js 18+
-- Webflow (for integration)
-- Modular `.ts` and `.css` files in `src/`
-
----
-
-## How it works
-
-- Each `.ts` file in `src/` is bundled as a separate entry point.
-- CSS imported in TS is extracted to a separate `.css` file.
-- On file changes, only the affected bundle is rebuilt.
-- All output is served from `dist/` on port 3000.
-
----
+- Node.js 16 or higher
+- TypeScript files (optional, JavaScript also supported)
 
 ## License
 
 MIT
+
+## Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request.

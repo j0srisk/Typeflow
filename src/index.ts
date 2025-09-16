@@ -1,18 +1,41 @@
 #!/usr/bin/env node
+import { Command } from "commander";
+import { devCommand } from "./commands/dev";
+import { buildCommand } from "./commands/build";
 
-import { config } from "./config.js";
-import { runDev } from "./commands/dev.js";
-import { runBuild } from "./commands/build.js";
+const program = new Command();
+const packageJson = require("../package.json");
 
-async function main() {
-  if (config.mode === "dev") {
-    await runDev(config);
-  } else if (config.mode === "build") {
-    await runBuild(config);
-  } else {
-    console.error(`Unknown mode: ${config.mode}`);
-    process.exit(1);
-  }
-}
+program
+  .name("typeflow")
+  .description(
+    "Local development server for TypeScript/JavaScript and CSS files in Webflow projects",
+  )
+  .version(packageJson.version, "-v, --version", "output the version number");
 
-await main();
+program
+  .description("Start development server")
+  .option("-p, --port <port>", "Port to run on", "3000")
+  .option("-r, --reload", "Enable live reload")
+  .option("-d, --debug", "Enable debug logging")
+  .action(devCommand);
+
+program
+  .command("dev")
+  .description("Start development server")
+  .option("-p, --port <port>", "Port to run on", "3000")
+  .option("-r,--reload", "Enable live reload")
+  .option("-d, --debug", "Enable debug logging")
+  .action(devCommand);
+
+program
+  .command("build")
+  .description("Build files for production")
+  .option("--minify", "Minify output files")
+  .option("--drop-console", "Remove console statements")
+  .option("--drop-debugger", "Remove debugger statements")
+  .option("--sourcemap", "Generate source maps")
+  .option("--debug", "Enable debug logging")
+  .action(buildCommand);
+
+program.parse();

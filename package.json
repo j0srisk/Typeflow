@@ -1,40 +1,51 @@
 {
-  "name": "@j0srisk/typeflow",
-  "version": "1.5.2",
-  "description": "Local dev tool for modular TypeScript+CSS workflow with Webflow.",
-  "type": "module",
-  "main": "build.js",
+  "name": "typeflow",
+  "version": "1.6.0",
+  "description": "Local development server for TypeScript/JavaScript and CSS files in Webflow projects",
+  "main": "dist/index.js",
   "bin": {
-    "typeflow": "dist/index.js"
+    "typeflow": "./bin/typeflow-d8c3f1a6.js"
   },
   "scripts": {
-    "build": "npx tsc",
-    "lint": "eslint . --ext .ts,.js",
-    "lint:fix": "eslint . --ext .ts,.js --fix",
-    "format": "prettier --check .",
-    "format:fix": "prettier --write ."
+    "build": "tsc && npm run build:client",
+    "build:client": "esbuild src/client/typeflow-d8c3f1a6.ts --outfile=dist/client/typeflow-d8c3f1a6.js --target=es2020 && cp src/client/index.html src/client/typeflow-a7b4e9f2.css dist/client/",
+    "dev": "tsc --watch",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "prepublishOnly": "npm run build && npm test"
   },
+  "keywords": [
+    "webflow",
+    "typescript",
+    "development",
+    "esbuild",
+    "live-reload"
+  ],
+  "author": "",
+  "license": "MIT",
+  "files": [
+    "dist/",
+    "bin/"
+  ],
   "dependencies": {
-    "chalk": "^5.4.1",
-    "chokidar": "^3.5.3",
-    "esbuild": "^0.19.11",
-    "gzip-size": "^7.0.0",
-    "ws": "^8.18.2"
+    "chokidar": "^4.0.3",
+    "commander": "^14.0.0",
+    "esbuild": "^0.25.8",
+    "ms": "^2.1.3",
+    "picocolors": "^1.1.1",
+    "ws": "^8.18.3"
   },
   "devDependencies": {
-    "@types/http-proxy": "^1.17.16",
-    "@types/node": "^20.11.30",
-    "@types/selfsigned": "^2.1.0",
+    "@types/jest": "^30.0.0",
+    "@types/ms": "^2.1.0",
+    "@types/node": "^24.1.0",
     "@types/ws": "^8.18.1",
-    "@typescript-eslint/eslint-plugin": "^8.31.1",
-    "@typescript-eslint/parser": "^8.31.1",
-    "eslint": "^9.25.1",
-    "eslint-config-prettier": "^10.1.2",
-    "eslint-plugin-prettier": "^5.2.6",
-    "http-proxy": "^1.18.1",
-    "prettier": "^3.5.3",
-    "selfsigned": "^2.4.1",
-    "ts-node": "^10.9.2",
-    "typescript": "^5.3.3"
+    "jest": "^30.0.5",
+    "prettier": "^3.6.2",
+    "ts-jest": "^29.4.0",
+    "typescript": "^5.8.3"
   }
 }
