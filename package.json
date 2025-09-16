@@ -1,5 +1,5 @@
 {
-  "name": "typeflow",
+  "name": "@j0srisk/typeflow",
   "version": "1.6.0",
   "description": "Local development server for TypeScript/JavaScript and CSS files in Webflow projects",
   "main": "dist/index.js",
