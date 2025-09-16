@@ -8,6 +8,7 @@ import { cleanDirectory, ensureDirectory } from "../utils/fs-utils";
 interface BuildOptions {
   minify?: boolean;
   dropConsole?: boolean;
+  dropDebugger?: boolean;
   sourcemap?: boolean;
   debug?: boolean;
 }
@@ -51,7 +52,10 @@ export async function buildCommand(options: BuildOptions) {
         ".css": "css",
       },
       minify: options.minify || false,
-      drop: options.dropConsole ? ["console"] : [],
+      drop: [
+        ...(options.dropConsole ? ["console"] : []),
+        ...(options.dropDebugger ? ["debugger"] : []),
+      ] as ("console" | "debugger")[],
       sourcemap: options.sourcemap || false,
       write: true,
       metafile: true,

@@ -33,6 +33,7 @@ program
   .description("Build files for production")
   .option("--minify", "Minify output files")
   .option("--drop-console", "Remove console statements")
+  .option("--drop-debugger", "Remove debugger statements")
   .option("--sourcemap", "Generate source maps")
   .option("--debug", "Enable debug logging")
   .action(buildCommand);
