@@ -26,7 +26,7 @@ npm install
 Install TypeFlow in your project:
 
 ```bash
-npm install typeflow
+npm install j0srisk/typeflow
 ```
 
 Create your project structure (this is just an example - organize files however works best for your project):
