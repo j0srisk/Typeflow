@@ -15,8 +15,9 @@ interface BuildOptions {
 
 export async function buildCommand(options: BuildOptions) {
   const startTime = Date.now();
-  const srcDir = path.resolve(process.cwd(), "src");
-  const outDir = path.resolve(process.cwd(), "dist");
+  const cwd = process.cwd();
+  const srcDir = path.resolve(cwd, "src");
+  const outDir = path.resolve(cwd, "dist");
 
   // Check if src directory exists
   if (!fs.existsSync(srcDir)) {
@@ -35,6 +36,8 @@ export async function buildCommand(options: BuildOptions) {
 
   try {
     const result = await esbuild.build({
+      // Metafile paths are relative to this; pin it so they resolve correctly.
+      absWorkingDir: cwd,
       entryPoints: [
         `${srcDir}/**/*.ts`,
         `${srcDir}/**/*.js`,
@@ -72,11 +75,12 @@ export async function buildCommand(options: BuildOptions) {
         result.metafile.outputs,
       )) {
         if (!outputPath.endsWith(".map")) {
-          const relativePath = path.relative(process.cwd(), outputPath);
+          const absolutePath = path.resolve(cwd, outputPath);
+          const relativePath = path.relative(cwd, absolutePath);
           const sizeKB = (output.bytes / 1024).toFixed(2);
 
           // Calculate gzip size
-          const fileContent = fs.readFileSync(outputPath);
+          const fileContent = fs.readFileSync(absolutePath);
           const gzipSize = zlib.gzipSync(fileContent).length;
           const gzipKB = (gzipSize / 1024).toFixed(2);
 
