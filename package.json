@@ -7,8 +7,9 @@
     "typeflow": "./bin/typeflow.js"
   },
   "scripts": {
+    "prebuild": "node -e \"require('fs').rmSync('dist',{recursive:true,force:true})\"",
     "build": "tsc && npm run build:client",
-    "build:client": "esbuild src/client/typeflow-d8c3f1a6.ts --outfile=dist/client/typeflow-d8c3f1a6.js --target=es2020 && cp src/client/index.html src/client/typeflow-a7b4e9f2.css dist/client/",
+    "build:client": "esbuild src/client/typeflow-d8c3f1a6.ts --outfile=dist/client/typeflow-d8c3f1a6.js --target=es2020 && cp src/client/index.html src/client/typeflow-a7b4e9f2.css src/client/live-reload.ts dist/client/",
     "dev": "tsc --watch",
     "test": "jest",
     "test:watch": "jest --watch",
