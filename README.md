@@ -103,7 +103,9 @@ npx typeflow --reload
 
 #### Development Options
 
+- `-p, --port <port>` - Port to serve on (default: `3000`). With `--reload`, the live-reload WebSocket uses `port + 1`, so when running multiple dev servers side by side, give them ports at least 2 apart (e.g. `3000` and `3002`).
 - `-r, --reload` - Enable live reload
+- `-d, --debug` - Enable debug logging
 
 ### Production Build
 
