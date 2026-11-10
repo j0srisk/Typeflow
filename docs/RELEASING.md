@@ -5,7 +5,7 @@ Releases are published to npm by GitHub Actions when a `v*` tag is pushed.
 ## Day to day
 
 1. Branch from `main` and commit using [conventional commits](https://www.conventionalcommits.org/) (`feat:`, `fix:`, `docs:`, `chore:`, ...).
-2. Open a PR. CI runs the format check, build and tests on Node 22 and 24.
+2. Open a PR. CI runs the format check, build, tests, and a smoke test that installs the packed tarball and runs the CLI, on Node 22 and 24.
 3. Merge once CI is green. Nothing is published until a tag is pushed.
 
 ## Cutting a release
