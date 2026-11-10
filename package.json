@@ -4,7 +4,7 @@
   "description": "Local development server for TypeScript/JavaScript and CSS files in Webflow projects",
   "main": "dist/index.js",
   "bin": {
-    "typeflow": "./bin/typeflow-d8c3f1a6.js"
+    "typeflow": "./bin/typeflow.js"
   },
   "scripts": {
     "build": "tsc && npm run build:client",
@@ -47,5 +47,9 @@
     "prettier": "^3.6.2",
     "ts-jest": "^29.4.0",
     "typescript": "^5.8.3"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/j0srisk/Typeflow.git"
   }
 }
