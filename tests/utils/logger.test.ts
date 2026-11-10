@@ -1,3 +1,4 @@
+import { stripVTControlCharacters } from "util";
 import { logger } from "../../src/utils/logger";
 
 // Mock console methods to test logging output
@@ -14,11 +15,12 @@ describe("logger", () => {
     errorOutput = [];
 
     console.log = jest.fn((...args) => {
-      logOutput.push(args.join(" "));
+      // Strip ANSI colors: picocolors enables them on CI.
+      logOutput.push(stripVTControlCharacters(args.join(" ")));
     });
 
     console.error = jest.fn((...args) => {
-      errorOutput.push(args.join(" "));
+      errorOutput.push(stripVTControlCharacters(args.join(" ")));
     });
 
     process.stdout.write = jest.fn((chunk) => {
