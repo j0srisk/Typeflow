@@ -96,10 +96,10 @@ export async function devCommand(options: DevOptions) {
                       "utf8",
                     );
 
-                    // Read live-reload client code
+                    // Read live-reload client code (copied to dist/client by build:client)
                     const liveReloadPath = path.resolve(
                       __dirname,
-                      "../../src/client/live-reload.ts",
+                      "../client/live-reload.ts",
                     );
                     let liveReloadCode = await fs.promises.readFile(
                       liveReloadPath,
