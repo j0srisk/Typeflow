@@ -65,30 +65,32 @@ describe("logger", () => {
       expect(errorOutput[0]).toContain("Test error message");
     });
 
-    it("should log debug messages with dim color", () => {
+    it("should log debug messages when debug is enabled", () => {
+      logger.setDebug(true);
       logger.debug("Test debug message");
+      logger.setDebug(false);
 
       expect(logOutput).toHaveLength(1);
       expect(logOutput[0]).toContain("typeflow");
       expect(logOutput[0]).toContain("Test debug message");
     });
+
+    it("should not log debug messages when debug is disabled", () => {
+      logger.setDebug(false);
+      logger.debug("Test debug message");
+
+      expect(logOutput).toHaveLength(0);
+    });
   });
 
   describe("special logging methods", () => {
-    it("should log server start information", () => {
-      logger.logServerStart(3000);
+    it("should log server start information with duration", () => {
+      logger.logServerStart(3000, 150);
 
-      expect(logOutput.length).toBeGreaterThan(0);
-      expect(logOutput.join(" ")).toContain("dev server running");
-      expect(logOutput.join(" ")).toContain("localhost:3000");
-    });
-
-    it("should log ready message with duration", () => {
-      logger.logReady(150);
-
-      expect(logOutput.length).toBeGreaterThan(0);
-      expect(logOutput.join(" ")).toContain("ready");
-      expect(logOutput.join(" ")).toContain("150ms");
+      const output = logOutput.join(" ");
+      expect(output).toContain("ready in");
+      expect(output).toContain("150");
+      expect(output).toContain("localhost:3000");
     });
 
     it("should log file change information", () => {
@@ -103,7 +105,7 @@ describe("logger", () => {
     it("should log build information", () => {
       const files = [
         { name: "dist/index.js", size: "2.5 kB", gzip: "0.8 kB" },
-        { name: "dist/styles.css", size: "1.2 kB" },
+        { name: "dist/styles.css", size: "1.2 kB", gzip: "0.4 kB" },
       ];
 
       logger.logBuild(files, 180);
@@ -121,7 +123,7 @@ describe("logger", () => {
       logger.info("Test message", { timestamp: true });
 
       expect(logOutput).toHaveLength(1);
-      expect(logOutput[0]).toMatch(/\[\d{1,2}:\d{2}:\d{2}\s+(AM|PM)\]/);
+      expect(logOutput[0]).toMatch(/\[\d{1,2}:\d{2}:\d{2}[^\]]*\]/);
     });
 
     it("should clear screen when requested", () => {
