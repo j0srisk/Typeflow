@@ -25,3 +25,5 @@ jobs:
       - run: npm run format:check
       - run: npm run build
       - run: npm test
+      # Install the packed tarball and run the real CLI against it.
+      - run: npm run test:package
